@@ -1,0 +1,62 @@
+REACHY MINI: VOICE-CONTROLLED AI SIMULATION PROJECT - SUMMARY
+============================================================
+
+1. PROJECT OVERVIEW
+-------------------
+Established a high-fidelity local development environment for the Reachy Mini robot (by Pollen Robotics) and implemented an expressive, voice-controlled AI assistant within a simulated environment.
+
+2. TECHNICAL STACK & TOOLS
+--------------------------
+- Operating System: Windows 10/11 (win32)
+- Core SDK: reachy-mini (v1.7.1) with [mujoco,dev] extras
+- Simulation Engine: MuJoCo
+- Python Version: 3.12 (managed via local 'venv')
+- Voice Interface:
+    - STT: SpeechRecognition (Google Web Speech API)
+    - TTS: pyttsx3 (Windows SAPI5)
+    - Audio I/O: PyAudio
+- Communication: REST API & WebSockets via reachy-mini-daemon
+
+3. IMPLEMENTATION DETAILS
+-------------------------
+- Environment Setup: Configured venv and resolved SDK flag changes (migrated to --no-media).
+- Kinematics: Mapped 6-DOF Orbita3D neck control (Roll, Pitch, Yaw + Z translation).
+- Safety Constraints: Optimized Neutral position to Z=20mm to prevent IK collisions.
+- AI Features: 
+    - Asynchronous "Breathing" loop for idle lifelike motion.
+    - Intent Parser for voice commands.
+    - "Cartoon" and "Minjerk" interpolation for expressive movement.
+    - Auto-Power Save: Robot retracts into shell after 60s of inactivity.
+
+4. FILE STRUCTURE
+-----------------
+- venv/                   : Python virtual environment
+- start_sim.sh           : Bash script to launch daemon
+- test_reachy.py         : Basic hardware testing script
+- interactive_reachy.py  : Main AI Voice-Assistant application
+- README.md              : Basic usage guide
+- PROJECT_SUMMARY.md     : Markdown project record
+- PROJECT_DETAILS.txt    : This plain-text record
+
+5. OPERATIONAL STEPS (HOW TO RUN)
+---------------------------------
+
+Terminal 1 (The Robot's Brain):
+  1. cd "C:\Users\Aryan's_WorkSpace\Desktop\Reachy Mini"
+  2. .\venv\Scripts\activate
+  3. reachy-mini-daemon --sim --scene minimal --no-media
+
+Terminal 2 (The AI Assistant):
+  1. cd "C:\Users\Aryan's_WorkSpace\Desktop\Reachy Mini"
+  2. .\venv\Scripts\activate
+  3. python interactive_reachy.py
+
+6. VOICE COMMANDS
+-----------------
+- "Hello Reachy" / "Wake up" : Greet and emerge from shell.
+- "Go to sleep" / "Hide"     : Retract into shell.
+- "Are you happy?"           : Expressive wiggle and look up.
+- "Look around"              : Random gaze scan.
+- "Listen to me"             : Curious head tilt.
+- "I'm tired"                : Empathetic sigh and lowered head.
+- "Status"                   : Vocalizes current head height.
