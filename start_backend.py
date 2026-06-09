@@ -31,7 +31,7 @@ def launch_backend():
         "uvicorn", 
         "backend_server.app:app", 
         "--host", "0.0.0.0", 
-        "--port", "8000", 
+        "--port", "8001", 
         "--reload"
     ]
     
@@ -48,8 +48,8 @@ if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(script_dir)
     
-    # 1. Clear Port 8000
-    kill_process_on_port(8000)
+    # 1. Clear Port 8001
+    kill_process_on_port(8001)
     
     # 2. Brief wait for OS to release socket
     time.sleep(1)

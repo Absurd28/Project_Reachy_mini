@@ -5,7 +5,7 @@ import ControlPanel from './components/ControlPanel';
 import EventFeed from './components/EventFeed';
 
 const ROBOT_IP = "127.0.0.1";
-const WS_URL = `ws://${ROBOT_IP}:8000/ws/telemetry`;
+const WS_URL = `ws://${ROBOT_IP}:8001/ws/telemetry`;
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
@@ -106,7 +106,7 @@ function App() {
             )}
           </div>
           <button 
-            onClick={() => fetch(`http://${ROBOT_IP}:8000/api/commands`, {
+            onClick={() => fetch(`http://${ROBOT_IP}:8001/api/commands`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ command: 'E-STOP' })
@@ -130,8 +130,8 @@ function App() {
                 System Modes <Activity size={14} />
              </h2>
              <div className="flex gap-2 mb-6">
-                <button onClick={() => fetch(`http://${ROBOT_IP}:8000/api/commands`, { method: 'POST', body: JSON.stringify({command: 'STIFF'})})} className="flex-1 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm font-semibold transition-colors">STIFF</button>
-                <button onClick={() => fetch(`http://${ROBOT_IP}:8000/api/commands`, { method: 'POST', body: JSON.stringify({command: 'COMPLIANT'})})} className="flex-1 py-2 bg-green-500 hover:bg-green-400 text-slate-900 rounded text-sm font-semibold transition-colors">COMPLIANT</button>
+                <button onClick={() => fetch(`http://${ROBOT_IP}:8001/api/commands`, { method: 'POST', body: JSON.stringify({command: 'STIFF'})})} className="flex-1 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm font-semibold transition-colors">STIFF</button>
+                <button onClick={() => fetch(`http://${ROBOT_IP}:8001/api/commands`, { method: 'POST', body: JSON.stringify({command: 'COMPLIANT'})})} className="flex-1 py-2 bg-green-500 hover:bg-green-400 text-slate-900 rounded text-sm font-semibold transition-colors">COMPLIANT</button>
              </div>
           </div>
         </div>
@@ -143,7 +143,7 @@ function App() {
         </div>
 
         {/* Right Column: Controls */}
-        <ControlPanel jointState={jointState} addAlert={addAlert} apiUrl={`http://${ROBOT_IP}:8000/api`} />
+        <ControlPanel jointState={jointState} addAlert={addAlert} apiUrl={`http://${ROBOT_IP}:8001/api`} />
         
       </main>
 

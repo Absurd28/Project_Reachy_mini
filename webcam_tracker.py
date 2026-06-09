@@ -27,8 +27,8 @@ class WebcamTracker:
     def _push_to_backend(self, payload):
         """Internal threaded POST to avoid blocking OpenCV."""
         try:
-            # Use the standardized internal telemetry endpoint
-            requests.post("http://127.0.0.1:8000/api/internal/telemetry", json=payload, timeout=0.1)
+            # Use the standardized internal telemetry endpoint on port 8001
+            requests.post("http://127.0.0.1:8001/api/internal/telemetry", json=payload, timeout=0.1)
         except Exception:
             pass # Silently fail to maintain vision loop stability
 

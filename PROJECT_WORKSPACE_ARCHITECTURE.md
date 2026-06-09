@@ -83,10 +83,10 @@ The workspace integrity is verified using `map_workspace.py`, which programmatic
 
 ## 6. NETWORK TOPOLOGY & PORTS
 
-- **FastAPI Edge Server**: Port `8000` (REST & WebSockets)
-- **Vite React Dev Server**: Port `5173`
-- **Reachy Mini Daemon (Sim)**: Port `8000` (Shared/Direct - Standardized)
-- **Websocket Path**: `ws://127.0.0.1:8000/ws/telemetry`
+- **Official Reachy Daemon**: Port `8000` (SDK Communication)
+- **Custom Edge FastAPI Server**: Port `8001` (REST & WebSockets)
+- **Vite React Dev Server**: Port `5173` (Caregiver Dashboard)
+- **Websocket Path**: `ws://127.0.0.1:8001/ws/telemetry`
 - **CORS Whitelist**: `http://localhost:5173`, `http://127.0.0.1:5173`
 
 ## 7. DATA PIPELINE ARCHITECTURE
