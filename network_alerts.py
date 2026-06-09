@@ -9,7 +9,7 @@ class AlertDispatcher:
     Handles non-blocking caregiver notifications via local FastAPI backend.
     Includes a fail-safe local TTS alert if network fails.
     """
-    def __init__(self, webhook_url="http://127.0.0.1:8001/api/alerts"):
+    def __init__(self, webhook_url="http://127.0.0.1:8000/api/alerts"):
         self.webhook_url = webhook_url
         self.robot_id = "Reachy-Unit-01"
         self._tts_engine = pyttsx3.init()

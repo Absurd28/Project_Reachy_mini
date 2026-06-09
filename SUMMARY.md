@@ -65,6 +65,12 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Reason**: To replace third-party webhooks with a private, real-time monitoring solution using WebSockets for live telemetry and REST for remote commands.
 
 - **2026-06-09**: 
-  - **Component**: Frontend UI (Modernization)
-  - **Change**: Migrated the vanilla HTML/JS dashboard to a React application using Vite ('frontend_react').
-  - **Reason**: To provide a more robust, component-driven architecture for the complex telemetry and bidirectional joint control features, improving code maintainability.
+  - **Component**: Network Architecture (Fix)
+  - **Change**: Aligned all communication to Port 8000, implemented a 30 FPS async telemetry broadcast loop in FastAPI, and added exponential backoff to React WebSocket connection.
+  - **Reason**: To resolve event loop blocking, unify the network topology, and ensure a robust, self-healing connection between the robot and dashboard.
+
+## Debugging & Verification Protocol
+1.  **Backend Health**: `GET http://127.0.0.1:8000/api/health` should return 200 OK.
+2.  **WebSocket Handshake**: Browser console should log "Handshake successful: WebSocket Link Active."
+3.  **Latency Check**: Joint sliders in UI should reflect in backend logs within <100ms.
+

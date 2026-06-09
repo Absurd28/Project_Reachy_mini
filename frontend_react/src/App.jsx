@@ -1,17 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Activity, Radio, AlertTriangle, ShieldCheck } from 'lucide-react';
 import TelemetryPanel from './components/TelemetryPanel';
 import ControlPanel from './components/ControlPanel';
 import EventFeed from './components/EventFeed';
 
-const ROBOT_IP = window.location.hostname || "127.0.0.1";
-const WS_URL = `ws://${ROBOT_IP}:8001/ws/telemetry`;
+const ROBOT_IP = (window.location.hostname === "localhost" || window.location.hostname === "") 
+  ? "127.0.0.1" 
+  : window.location.hostname;
+const WS_URL = `ws://${ROBOT_IP}:8000/ws/telemetry`;
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [telemetry, setTelemetry] = useState({ posture: '---', distance: null });
   const [jointState, setJointState] = useState({});
   const [alerts, setAlerts] = useState([]);
+  const wsRef = useRef(null);
+  const retryDelayRef = useRef(2000);
 
   const addAlert = useCallback((msg, severity) => {
     setAlerts(prev => [{
@@ -23,26 +27,49 @@ function App() {
   }, []);
 
   useEffect(() => {
-    let ws;
     let reconnectTimeout;
 
     const connect = () => {
-      ws = new WebSocket(WS_URL);
+      if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+        return;
+      }
+
+      console.log(`Attempting connection to: ${WS_URL}`);
+      addAlert(`Connecting to ${WS_URL}...`, "INFO");
+      
+      const ws = new WebSocket(WS_URL);
+      wsRef.current = ws;
 
       ws.onopen = () => {
         setIsConnected(true);
+        retryDelayRef.current = 2000; // Reset backoff on success
         addAlert("System link established.", "INFO");
+        console.log("Handshake successful: WebSocket Link Active.");
       };
 
-      ws.onclose = () => {
+      ws.onerror = (err) => {
+        console.error("WebSocket Error:", err);
+      };
+
+      ws.onclose = (event) => {
         setIsConnected(false);
-        addAlert("Link lost. Retrying...", "CRITICAL");
-        reconnectTimeout = setTimeout(connect, 3000);
+        wsRef.current = null;
+        if (!event.wasClean) {
+            console.log(`WS Closed: Code=${event.code}. Retrying in ${retryDelayRef.current/1000}s...`);
+            addAlert(`Link lost (Code ${event.code}). Retrying...`, "CRITICAL");
+            
+            reconnectTimeout = setTimeout(() => {
+                connect();
+                // Exponential backoff capped at 30s
+                retryDelayRef.current = Math.min(retryDelayRef.current * 2, 30000);
+            }, retryDelayRef.current);
+        }
       };
 
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+          if (msg.type === "KEEP_ALIVE") return;
           
           if (msg.type === "ALERT") {
             addAlert(msg.data.message, msg.data.severity);
@@ -64,7 +91,7 @@ function App() {
     connect();
 
     return () => {
-      if (ws) ws.close();
+      if (wsRef.current) wsRef.current.close();
       clearTimeout(reconnectTimeout);
     };
   }, [addAlert]);
@@ -88,7 +115,7 @@ function App() {
             )}
           </div>
           <button 
-            onClick={() => fetch(`http://${ROBOT_IP}:8001/api/commands`, {
+            onClick={() => fetch(`http://${ROBOT_IP}:8000/api/commands`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ command: 'E-STOP' })
@@ -112,8 +139,8 @@ function App() {
                 System Modes <Activity size={14} />
              </h2>
              <div className="flex gap-2 mb-6">
-                <button onClick={() => fetch(`http://${ROBOT_IP}:8001/api/commands`, { method: 'POST', body: JSON.stringify({command: 'STIFF'})})} className="flex-1 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm font-semibold transition-colors">STIFF</button>
-                <button onClick={() => fetch(`http://${ROBOT_IP}:8001/api/commands`, { method: 'POST', body: JSON.stringify({command: 'COMPLIANT'})})} className="flex-1 py-2 bg-green-500 hover:bg-green-400 text-slate-900 rounded text-sm font-semibold transition-colors">COMPLIANT</button>
+                <button onClick={() => fetch(`http://${ROBOT_IP}:8000/api/commands`, { method: 'POST', body: JSON.stringify({command: 'STIFF'})})} className="flex-1 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm font-semibold transition-colors">STIFF</button>
+                <button onClick={() => fetch(`http://${ROBOT_IP}:8000/api/commands`, { method: 'POST', body: JSON.stringify({command: 'COMPLIANT'})})} className="flex-1 py-2 bg-green-500 hover:bg-green-400 text-slate-900 rounded text-sm font-semibold transition-colors">COMPLIANT</button>
              </div>
           </div>
         </div>
@@ -125,7 +152,7 @@ function App() {
         </div>
 
         {/* Right Column: Controls */}
-        <ControlPanel jointState={jointState} addAlert={addAlert} apiUrl={`http://${ROBOT_IP}:8001/api`} />
+        <ControlPanel jointState={jointState} addAlert={addAlert} apiUrl={`http://${ROBOT_IP}:8000/api`} />
         
       </main>
 

@@ -13,9 +13,9 @@ The following conceptual tree illustrates the high-level organization of the pro
 ├── webcam_tracker.py           # Live OpenCV/MediaPipe Pose Estimation
 ├── network_alerts.py           # Non-blocking Alert Dispatcher (Local Target)
 ├── backend_server/
-│   └── app.py                  # FastAPI Edge Server (WebSockets & REST)
+│   └── app.py                  # FastAPI Edge Server (WS/REST: Port 8000)
 ├── frontend_react/
-│   └── src/App.jsx             # React/Vite Caregiver Dashboard (Modern UI)
+│   └── src/App.jsx             # Caregiver Dashboard (Vite Port: 5173)
 ├── map_workspace.py            # Architectural Verification Script
 ├── PROJECT_SUMMARY.md          # Technical Log & Milestones
 ├── start_sim.sh                # Simulation Bootstrapper
@@ -52,7 +52,7 @@ The project has evolved into a **Full-Stack Robotics** ecosystem. The Edge Serve
 - **Functional Role:** Manages joint transformations and the bidirectional data flow between the robot and the caregiver.
 - **Associated Sub-Categories & File Paths:**
     * *Edge Backend:* `backend_server/app.py` (FastAPI/WebSockets).
-    * *Client Interface:* `frontend_app/index.html` (Native JS Dashboard).
+    * *Client Interface:* `frontend_react/src/App.jsx` (React Dashboard).
     * *Kinematics Engines:* `venv/Lib/site-packages/reachy_mini/kinematics/` (IK solvers).
 
 ### Execution & Application Logic
@@ -68,10 +68,14 @@ The project has evolved into a **Full-Stack Robotics** ecosystem. The Edge Serve
 
 The workspace integrity is verified using `map_workspace.py`, which programmatically categorizes the file distribution.
 
-**Current Distribution Snapshot:**
-- **Application Logic:** ~6 core scripts.
-- **SDK & Simulation Core:** ~250 items.
-- **Environment & Dependencies:** ~19,000 items.
-- **System Records:** ~34 items.
-
 *To re-verify the distribution, run:* `python map_workspace.py`
+
+---
+
+## 5. NETWORK TOPOLOGY & PORTS
+
+- **FastAPI Edge Server**: Port `8000` (REST & WebSockets)
+- **Vite React Dev Server**: Port `5173`
+- **Reachy Mini Daemon (Sim)**: Port `8000` (Shared/Direct - Standardized)
+- **Websocket Path**: `ws://127.0.0.1:8000/ws/telemetry`
+- **CORS Whitelist**: `http://localhost:5173`, `http://127.0.0.1:5173`
