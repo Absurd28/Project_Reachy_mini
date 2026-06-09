@@ -28,3 +28,8 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Component**: Vision & Perception (Healthcare Phase 2)
   - **Change**: Implemented 'webcam_tracker.py' (OpenCV/MediaPipe) and integrated TTS/Vision orchestration into 'test_reachy.py'.
   - **Reason**: To upgrade from mock telemetry to live pose estimation (Sleeping/Sitting/Standing) and distance-based patient monitoring.
+
+- **2026-06-09**: 
+  - **Component**: Dependencies (MediaPipe)
+  - **Change**: Downgraded MediaPipe to version 0.10.13 to restore the legacy 'solutions' API on Python 3.12.
+  - **Reason**: Resolved 'AttributeError: module mediapipe has no attribute solutions' caused by API removals in newer versions.
