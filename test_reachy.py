@@ -35,7 +35,7 @@ def move_head(mini, roll=0, pitch=0, yaw=0, z=NEUTRAL_Z, duration=1.5):
     mini.goto_target(head=target_pose, duration=duration)
 
 def run_vision_monitoring():
-    """Phase 2: Live Webcam Tracking with Pose Estimation."""
+    """Phase 3: Robust Vision Tracking with Recovery Logic."""
     print(f"Checking daemon status at {DEFAULT_HOST}:{DEFAULT_PORT}...")
     if not check_daemon_running():
         print("ERROR: reachy-mini-daemon is not running!")
@@ -45,34 +45,35 @@ def run_vision_monitoring():
     
     try:
         with ReachyMini(host=DEFAULT_HOST, port=DEFAULT_PORT, media_backend='no_media') as mini:
-            print("Vision-Based Healthcare Layer Active.")
+            print("Healthcare Monitoring System Initialized.")
             move_head(mini, z=NEUTRAL_Z, duration=1.0)
             
             last_alert_time = 0
             
             for frame, state, dist, alert in tracker.stream_vision_telemetry():
-                # state: SLEEPING, SITTING, STANDING, NO_PATIENT, EXIT_BREACH
                 
-                if alert == "BREACH" or state == "EXIT_BREACH":
-                    speak("Alert! Patient has disappeared from the tracking zone.")
+                if alert == "BREACH":
+                    speak("Critical Alert! Patient has disappeared from the tracking zone.")
                     move_head(mini, roll=0, pitch=20, yaw=0, z=MIN_Z, duration=0.5)
-                    break
                 
-                if alert == "WARNING":
-                    # Throttle TTS alerts to every 5 seconds
+                elif alert == "RECOVERY":
+                    speak("Patient detected. Resuming monitoring.")
+                    move_head(mini, roll=0, pitch=0, yaw=0, z=NEUTRAL_Z, duration=1.0)
+                
+                elif alert == "WARNING":
                     if time.time() - last_alert_time > 5:
                         speak("Warning, patient is leaving the designated area.")
                         last_alert_time = time.time()
-                    # Visual concern
                     move_head(mini, roll=10, pitch=0, yaw=0, z=NEUTRAL_Z, duration=0.3)
                 
-                # Dynamic looking based on state (simulated gaze adjustment)
-                if state == "SITTING":
-                    move_head(mini, pitch=10, z=NEUTRAL_Z, duration=0.8)
-                elif state == "STANDING":
-                    move_head(mini, pitch=-5, z=NEUTRAL_Z, duration=0.8)
-                elif state == "SLEEPING":
-                    move_head(mini, pitch=25, z=NEUTRAL_Z, duration=0.8)
+                # Dynamic gaze (only if not currently breached)
+                if not tracker.is_breached:
+                    if state == "SITTING":
+                        move_head(mini, pitch=10, z=NEUTRAL_Z, duration=0.8)
+                    elif state == "STANDING":
+                        move_head(mini, pitch=-5, z=NEUTRAL_Z, duration=0.8)
+                    elif state == "SLEEPING":
+                        move_head(mini, pitch=25, z=NEUTRAL_Z, duration=0.8)
 
             print("Vision sequence terminated.")
 

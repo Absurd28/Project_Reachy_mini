@@ -38,3 +38,8 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Component**: Vision UI/UX (Healthcare Phase 2.5)
   - **Change**: Enhanced 'webcam_tracker.py' with a semi-transparent dashboard, state-based skeleton colors, pulsing red borders, and a blurred critical breach overlay.
   - **Reason**: To provide rich, high-alert visual feedback for local monitoring, improving situational awareness during safety events.
+
+- **2026-06-09**: 
+  - **Component**: Vision Robustness (Bug Fix)
+  - **Change**: Added 2s camera warmup, implemented a 3s landmark disappearance grace period, and added a 'RECOVERY' state to 'webcam_tracker.py'.
+  - **Reason**: Resolved immediate program termination on startup and allowed the robot to automatically resume monitoring if the patient returns to the frame.
