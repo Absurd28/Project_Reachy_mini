@@ -9,16 +9,17 @@ The following conceptual tree illustrates the high-level organization of the pro
 ```text
 .
 ├── interactive_reachy.py       # Main HCI / Voice AI Engine
-├── test_reachy.py              # Orchestration & Patient Monitoring Loop
-├── patient_tracker.py          # Spatial Perception & State Machine
+├── test_reachy.py              # Orchestration, Patient Monitoring & Vision Loop
+├── patient_tracker.py          # Mock Spatial Perception (Deprecated)
+├── webcam_tracker.py           # Live OpenCV/MediaPipe Pose Estimation
 ├── map_workspace.py            # Architectural Verification Script
 ├── PROJECT_SUMMARY.md          # Technical Log & Milestones
 ├── start_sim.sh                # Simulation Bootstrapper
 │
-├── venv/                       # [DEPENDENCY NOISE: ~19,000 files]
+├── venv/                       # [DEPENDENCY NOISE: ~21,000 files]
 ```
 
-> **Note:** The vast majority of the 21,072 items are housed within the `.venv/` and `.git/` directories, representing the Python runtime, simulation dependencies (MuJoCo, SDKs), and version history.
+> **Note:** The vast majority of the 21,000+ items are housed within the `.venv/` and `.git/` directories, representing the Python runtime, simulation dependencies (MuJoCo, SDKs), and version history.
 
 ---
 
@@ -28,7 +29,7 @@ The following conceptual tree illustrates the high-level organization of the pro
 The project follows a **Hardware-in-the-Loop (HiL)** development model where the software logic (AI Assistant & Healthcare Monitor) interacts with a **Digital Twin** (MuJoCo Simulation) through a standardized communication bridge. 
 
 **Operational Responsibilities:**
-- **Perception Layer:** Voice capture, NLP intent parsing, and **Spatial Patient Tracking**.
+- **Perception Layer:** Voice capture, NLP intent parsing, and **Live Vision-Based Patient Tracking**.
 - **Orchestration Layer:** Managing the state machine between "Idle", "Active", and **"Healthcare Alert"**.
 - **Execution Layer:** Translating high-level intents into low-level joint trajectories.
 
@@ -55,11 +56,11 @@ The project follows a **Hardware-in-the-Loop (HiL)** development model where the
     * *Hardware Interface (IO):* `venv/Lib/site-packages/reachy_mini/io/` (Communication protocols for simulation and real hardware).
 
 ### Human-Computer Interaction (HCI) & Perception Interface
-- **Functional Role:** The high-level application layer that manages multimodal perception (STT, Spatial Tracking), personality modeling, and output generation (TTS).
+- **Functional Role:** The high-level application layer that manages multimodal perception (STT, Live Computer Vision), personality modeling, and output generation (TTS).
 - **Associated Sub-Categories & File Paths:**
     * *AI Logic Engine:* `interactive_reachy.py` (Main entry point for voice interaction).
-    * *Spatial Tracker:* `patient_tracker.py` (Simulates 2D patient telemetry and safety state machine).
-    * *Validation & Monitoring:* `test_reachy.py` (Couples tracking logic with physical kinematic responses).
+    * *Vision Tracker:* `webcam_tracker.py` (Real-time OpenCV/MediaPipe pose estimation engine).
+    * *Validation & Monitoring:* `test_reachy.py` (Couples vision logic with physical kinematic responses and TTS alerts).
 
 ---
 

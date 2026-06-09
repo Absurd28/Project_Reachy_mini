@@ -23,3 +23,8 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Component**: Environment & Documentation
   - **Change**: Updated all operational guides and scripts to use the venv-relative path for 'reachy-mini-daemon'.
   - **Reason**: To resolve the 'CommandNotFound' error and ensure consistent execution across different shell environments.
+
+- **2026-06-09**: 
+  - **Component**: Vision & Perception (Healthcare Phase 2)
+  - **Change**: Implemented 'webcam_tracker.py' (OpenCV/MediaPipe) and integrated TTS/Vision orchestration into 'test_reachy.py'.
+  - **Reason**: To upgrade from mock telemetry to live pose estimation (Sleeping/Sitting/Standing) and distance-based patient monitoring.

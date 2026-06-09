@@ -13,6 +13,7 @@ def map_workspace():
             "interactive_reachy.py",
             "test_reachy.py",
             "patient_tracker.py",
+            "webcam_tracker.py",
             "PROJECT_SUMMARY.md",
             "PROJECT_DETAILS.txt",
             "README.md",
