@@ -13,6 +13,11 @@ MIN_Z = 0
 MAX_Z = 35  
 NEUTRAL_Z = 20 
 
+# Control Constants (P-Controller)
+KP = 15.0  # Proportional Gain
+YAW_LIMIT = 45
+PITCH_LIMIT = 30
+
 # Initialize TTS
 engine = pyttsx3.init()
 
@@ -35,7 +40,7 @@ def move_head(mini, roll=0, pitch=0, yaw=0, z=NEUTRAL_Z, duration=1.5):
     mini.goto_target(head=target_pose, duration=duration)
 
 def run_vision_monitoring():
-    """Phase 3: Robust Vision Tracking with Recovery Logic."""
+    """Phase 4: Real-Time Proportional Head Tracking."""
     print(f"Checking daemon status at {DEFAULT_HOST}:{DEFAULT_PORT}...")
     if not check_daemon_running():
         print("ERROR: reachy-mini-daemon is not running!")
@@ -45,16 +50,19 @@ def run_vision_monitoring():
     
     try:
         with ReachyMini(host=DEFAULT_HOST, port=DEFAULT_PORT, media_backend='no_media') as mini:
-            print("Healthcare Monitoring System Initialized.")
+            print("Healthcare Monitoring System Initialized. Real-time P-Control active.")
             move_head(mini, z=NEUTRAL_Z, duration=1.0)
             
             last_alert_time = 0
+            curr_yaw, curr_pitch = 0.0, 0.0
             
-            for frame, state, dist, alert in tracker.stream_vision_telemetry():
+            for frame, state, dist, alert, error in tracker.stream_vision_telemetry():
+                error_x, error_y = error
                 
                 if alert == "BREACH":
-                    speak("Critical Alert! Patient has disappeared from the tracking zone.")
+                    speak("Critical Alert! Patient has disappeared.")
                     move_head(mini, roll=0, pitch=20, yaw=0, z=MIN_Z, duration=0.5)
+                    curr_yaw, curr_pitch = 0.0, 0.0 # Reset targets
                 
                 elif alert == "RECOVERY":
                     speak("Patient detected. Resuming monitoring.")
@@ -64,16 +72,22 @@ def run_vision_monitoring():
                     if time.time() - last_alert_time > 5:
                         speak("Warning, patient is leaving the designated area.")
                         last_alert_time = time.time()
-                    move_head(mini, roll=10, pitch=0, yaw=0, z=NEUTRAL_Z, duration=0.3)
                 
-                # Dynamic gaze (only if not currently breached)
-                if not tracker.is_breached:
-                    if state == "SITTING":
-                        move_head(mini, pitch=10, z=NEUTRAL_Z, duration=0.8)
-                    elif state == "STANDING":
-                        move_head(mini, pitch=-5, z=NEUTRAL_Z, duration=0.8)
-                    elif state == "SLEEPING":
-                        move_head(mini, pitch=25, z=NEUTRAL_Z, duration=0.8)
+                # P-Controller Logic (Only during SAFE/WARNING and when patient is visible)
+                if not tracker.is_breached and state != "NO_PATIENT":
+                    # Update targets based on error and Kp
+                    target_yaw = curr_yaw - (error_x * KP)
+                    target_pitch = curr_pitch + (error_y * KP)
+                    
+                    # Clamp to safety limits
+                    curr_yaw = np.clip(target_yaw, -YAW_LIMIT, YAW_LIMIT)
+                    curr_pitch = np.clip(target_pitch, -PITCH_LIMIT, PITCH_LIMIT)
+                    
+                    print(f"[CONTROL] Err: ({error_x:.2f}, {error_y:.2f}) | Target RPY: (0, {curr_pitch:.1f}, {curr_yaw:.1f})")
+                    
+                    # Command head movement (non-blocking)
+                    # Use small duration for smooth continuous tracking
+                    move_head(mini, roll=0, pitch=curr_pitch, yaw=curr_yaw, z=NEUTRAL_Z, duration=0.1)
 
             print("Vision sequence terminated.")
 

@@ -82,16 +82,23 @@ class WebcamTracker:
             
             state, skeleton_color = "NO_PATIENT", (255, 255, 255)
             dist_val = 0.0
+            error_x, error_y = 0.0, 0.0
             alert_trigger = None
 
             if results.pose_landmarks:
-                # Patient is visible
                 if self.is_breached:
                     alert_trigger = "RECOVERY"
                     self.is_breached = False
                 
                 self.last_detection_time = time.time()
                 landmarks = results.pose_landmarks.landmark
+                
+                # Tracking point: Midpoint between shoulders for stability
+                track_point_x = (landmarks[11].x + landmarks[12].x) / 2
+                track_point_y = (landmarks[11].y + landmarks[12].y) / 2
+                error_x = track_point_x - 0.5
+                error_y = track_point_y - 0.5
+
                 state, skeleton_color = self.analyze_pose(landmarks)
                 dist_val = self.get_distance_heuristic(landmarks)
                 
@@ -105,7 +112,6 @@ class WebcamTracker:
                 self.mp_draw.draw_landmarks(image, results.pose_landmarks, self.mp_pose.POSE_CONNECTIONS, 
                                             landmark_drawing_spec=custom_style, connection_drawing_spec=custom_style)
             else:
-                # No landmarks detected
                 missing_duration = time.time() - self.last_detection_time
                 if missing_duration > self.disappearance_limit:
                     if not self.is_breached:
@@ -123,7 +129,7 @@ class WebcamTracker:
             if self.is_breached or state == "EXIT_BREACH":
                 self.draw_critical_breach(image)
 
-            yield image, state, dist_val, alert_trigger
+            yield image, state, dist_val, alert_trigger, (error_x, error_y)
 
             cv2.imshow('Reachy Mini Healthcare Vision', image)
             if cv2.waitKey(5) & 0xFF == ord('q'):
