@@ -16,6 +16,7 @@ The following conceptual tree illustrates the high-level organization of the pro
 │   └── app.py                  # FastAPI Edge Server (WS/REST: Port 8000)
 ├── frontend_react/
 │   └── src/App.jsx             # Caregiver Dashboard (Vite Port: 5173)
+├── start_backend.py            # Port-Clearing Backend Launcher
 ├── map_workspace.py            # Architectural Verification Script
 ├── PROJECT_SUMMARY.md          # Technical Log & Milestones
 ├── start_sim.sh                # Simulation Bootstrapper
@@ -64,7 +65,13 @@ The project has evolved into a **Full-Stack Robotics** ecosystem. The Edge Serve
 
 ---
 
-## 4. ARCHITECTURAL VERIFICATION
+## 4. UTILITY SCRIPTS
+
+### Backend Launcher (`start_backend.py`)
+- **Purpose**: Solves `WinError 10048` (Address already in use) by auditing Port 8000 and force-terminating zombie processes before booting the FastAPI server.
+- **Dependencies**: Requires `psutil`.
+
+## 5. ARCHITECTURAL VERIFICATION
 
 The workspace integrity is verified using `map_workspace.py`, which programmatically categorizes the file distribution.
 
@@ -72,7 +79,7 @@ The workspace integrity is verified using `map_workspace.py`, which programmatic
 
 ---
 
-## 5. NETWORK TOPOLOGY & PORTS
+## 6. NETWORK TOPOLOGY & PORTS
 
 - **FastAPI Edge Server**: Port `8000` (REST & WebSockets)
 - **Vite React Dev Server**: Port `5173`
