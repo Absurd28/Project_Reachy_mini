@@ -32,7 +32,7 @@ chmod +x start_sim.sh
 .\venv\Scripts\activate
 
 # Start the daemon
-reachy-mini-daemon --sim --scene minimal --no-media
+.\venv\Scripts\reachy-mini-daemon --sim --scene minimal --no-media
 ```
 
 ## 3. Running the Control Script

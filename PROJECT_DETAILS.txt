@@ -44,7 +44,7 @@ Established a high-fidelity local development environment for the Reachy Mini ro
 Terminal 1 (The Robot's Brain):
   1. cd "C:\Users\Aryan's_WorkSpace\Desktop\Reachy Mini"
   2. .\venv\Scripts\activate
-  3. reachy-mini-daemon --sim --scene minimal --no-media
+  3. .\venv\Scripts\reachy-mini-daemon --sim --scene minimal --no-media
 
 Terminal 2 (The AI Assistant):
   1. cd "C:\Users\Aryan's_WorkSpace\Desktop\Reachy Mini"

@@ -18,3 +18,8 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Component**: Perception & Kinematics (Healthcare Phase 1)
   - **Change**: Implemented 'patient_tracker.py' and integrated spatial tracking into 'test_reachy.py'.
   - **Reason**: To establish a local healthcare monitoring layer with reactive robot behaviors (active looking and alert retraction).
+
+- **2026-06-09**: 
+  - **Component**: Environment & Documentation
+  - **Change**: Updated all operational guides and scripts to use the venv-relative path for 'reachy-mini-daemon'.
+  - **Reason**: To resolve the 'CommandNotFound' error and ensure consistent execution across different shell environments.

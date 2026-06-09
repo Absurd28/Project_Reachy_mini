@@ -48,7 +48,7 @@ The goal of this project was to establish a high-fidelity local development envi
 This window runs the robot's "brain" and physics.
 ```powershell
 .\venv\Scripts\activate
-reachy-mini-daemon --sim --scene minimal --no-media
+.\venv\Scripts\reachy-mini-daemon --sim --scene minimal --no-media
 ```
 
 ### Step 2: Start the AI Assistant (Terminal 2)
