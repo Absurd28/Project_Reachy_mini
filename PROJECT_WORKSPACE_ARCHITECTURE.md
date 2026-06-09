@@ -14,8 +14,8 @@ The following conceptual tree illustrates the high-level organization of the pro
 ├── network_alerts.py           # Non-blocking Alert Dispatcher (Local Target)
 ├── backend_server/
 │   └── app.py                  # FastAPI Edge Server (WebSockets & REST)
-├── frontend_app/
-│   └── index.html              # Local Caregiver Dashboard (Vanilla JS)
+├── frontend_react/
+│   └── src/App.jsx             # React/Vite Caregiver Dashboard (Modern UI)
 ├── map_workspace.py            # Architectural Verification Script
 ├── PROJECT_SUMMARY.md          # Technical Log & Milestones
 ├── start_sim.sh                # Simulation Bootstrapper

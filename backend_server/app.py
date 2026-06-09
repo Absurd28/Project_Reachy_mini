@@ -12,7 +12,11 @@ app = FastAPI()
 # Enable CORS for local network access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173",
+        "*"
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -51,6 +55,10 @@ class AlertPayload(BaseModel):
     message: str
     telemetry: dict = None
 
+class JointCommand(BaseModel):
+    joint_name: str
+    angle: float
+
 # --- REST Endpoints ---
 @app.get("/")
 async def get_dashboard():
@@ -74,9 +82,19 @@ async def receive_command(request: Request):
     command = data.get("command")
     print(f"REMOTE COMMAND RECEIVED: {command}")
     
-    # In a production setup, this would use a message queue (Redis/MQTT) 
-    # to signal test_reachy.py. For now, we log the intent.
+    # Broadcast command to any listening robot controllers (if any)
+    await manager.broadcast(json.dumps({
+        "type": "CMD_TRIGGER",
+        "command": command
+    }))
     return {"status": "command_received", "cmd": command}
+
+@app.post("/api/commands/joint")
+async def receive_joint_command(cmd: JointCommand):
+    """Receives specific joint movements from the Dashboard sliders."""
+    print(f"JOINT MOVE: {cmd.joint_name} -> {cmd.angle}")
+    # In a real setup, this would command the Reachy SDK
+    return {"status": "success", "joint": cmd.joint_name, "angle": cmd.angle}
 
 # --- WebSocket Endpoint ---
 @app.websocket("/ws/telemetry")

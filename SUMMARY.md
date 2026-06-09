@@ -65,6 +65,6 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Reason**: To replace third-party webhooks with a private, real-time monitoring solution using WebSockets for live telemetry and REST for remote commands.
 
 - **2026-06-09**: 
-  - **Component**: Backend Stability & UI
-  - **Change**: Migrated to Pydantic 'model_dump()' and added a root route to serve 'index.html' in 'backend_server/app.py'.
-  - **Reason**: Resolved deprecation warnings and fixed the 404 error when accessing the dashboard root URL.
+  - **Component**: Frontend UI (Modernization)
+  - **Change**: Migrated the vanilla HTML/JS dashboard to a React application using Vite ('frontend_react').
+  - **Reason**: To provide a more robust, component-driven architecture for the complex telemetry and bidirectional joint control features, improving code maintainability.
