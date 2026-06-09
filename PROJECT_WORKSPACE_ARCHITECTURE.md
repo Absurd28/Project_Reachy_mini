@@ -11,8 +11,11 @@ The following conceptual tree illustrates the high-level organization of the pro
 ├── interactive_reachy.py       # Main HCI / Voice AI Engine
 ├── test_reachy.py              # Orchestration, Patient Monitoring & Vision Loop
 ├── webcam_tracker.py           # Live OpenCV/MediaPipe Pose Estimation
-├── network_alerts.py           # Non-blocking Webhook Alert Dispatcher
-├── patient_tracker.py          # Mock Spatial Perception (Deprecated)
+├── network_alerts.py           # Non-blocking Alert Dispatcher (Local Target)
+├── backend_server/
+│   └── app.py                  # FastAPI Edge Server (WebSockets & REST)
+├── frontend_app/
+│   └── index.html              # Local Caregiver Dashboard (Vanilla JS)
 ├── map_workspace.py            # Architectural Verification Script
 ├── PROJECT_SUMMARY.md          # Technical Log & Milestones
 ├── start_sim.sh                # Simulation Bootstrapper
@@ -26,44 +29,38 @@ The following conceptual tree illustrates the high-level organization of the pro
 
 ## 2. SOFTWARE DEVELOPMENT MODEL MAPPING
 
-### **Paradigm: Component-Based / Hardware-in-the-Loop (HiL) Simulation**
-The project follows a **Hardware-in-the-Loop (HiL)** development model where the software logic (AI Assistant & Healthcare Monitor) interacts with a **Digital Twin** (MuJoCo Simulation) through a standardized communication bridge. 
+### **Paradigm: Full-Stack Robotics / Hardware-in-the-Loop (HiL)**
+The project has evolved into a **Full-Stack Robotics** ecosystem. The Edge Server bridges the low-level kinematic control with a high-level, interactive web dashboard, enabling remote monitoring and teleoperation.
 
 **Operational Responsibilities:**
-- **Perception Layer:** Voice capture, NLP intent parsing, and **Live Vision-Based Patient Tracking**.
-- **Communications Layer:** External caregiver notifications via **Asynchronous Webhooks**.
-- **Orchestration Layer:** Managing the state machine between "Idle", "Active", and **"Healthcare Alert"**.
-- **Execution Layer:** Translating high-level intents into low-level joint trajectories.
+- **Perception Layer:** Live Vision-Based Patient Tracking (OpenCV/MediaPipe).
+- **Edge Communications:** FastAPI backend managing real-time WebSocket telemetry and incoming remote commands.
+- **Remote Interface:** Interactive HTML5/JS dashboard for real-time status and control.
+- **Execution Layer:** Smooth 6-DOF head tracking and safety retraction sequences.
 
 ---
 
 ## 3. CATEGORIZED FUNCTIONAL MAPPING
 
 ### Physics Simulation & Digital Twin Assets
-- **Functional Role:** Handles rigid-body dynamics, joint limits, collision mesh rendering, and environmental scene configuration.
+- **Functional Role:** Handles rigid-body dynamics, joint limits, and environmental scene configuration.
 - **Associated Sub-Categories & File Paths:**
-    * *Simulation Meshes:* `venv/Lib/site-packages/reachy_mini/assets/` (Contains `.stl` and `.xml` definitions for the robot body).
-    * *Robot Descriptions:* `venv/Lib/site-packages/reachy_mini/descriptions/` (URDF and MJCF configuration files).
+    * *Simulation Meshes:* `venv/Lib/site-packages/reachy_mini/assets/` (STL/XML meshes).
+    * *Robot Descriptions:* `venv/Lib/site-packages/reachy_mini/descriptions/` (URDF/MJCF configs).
 
-### Kinematics & Control Core
-- **Functional Role:** Manages the mathematical transformation between Cartesian space (X, Y, Z) and Joint space (Roll, Pitch, Yaw). Handles trajectory smoothing and safety constraints.
+### Kinematics & Full-Stack Communications
+- **Functional Role:** Manages joint transformations and the bidirectional data flow between the robot and the caregiver.
 - **Associated Sub-Categories & File Paths:**
-    * *Kinematics Engines:* `venv/Lib/site-packages/reachy_mini/kinematics/` (Rust-optimized IK solvers).
-    * *Motion Primitives:* `venv/Lib/site-packages/reachy_mini/motion/` (Animation styles like `minjerk` and `cartoon`).
+    * *Edge Backend:* `backend_server/app.py` (FastAPI/WebSockets).
+    * *Client Interface:* `frontend_app/index.html` (Native JS Dashboard).
+    * *Kinematics Engines:* `venv/Lib/site-packages/reachy_mini/kinematics/` (IK solvers).
 
-### Execution & Communication Daemons
-- **Functional Role:** Provides the runtime orchestration required to bridge the AI logic with the physics engine via REST/WebSockets.
+### Execution & Application Logic
+- **Functional Role:** The high-level application layer that manages multimodal perception and robotic personality.
 - **Associated Sub-Categories & File Paths:**
-    * *Background Runtimes:* `venv/Lib/site-packages/reachy_mini/daemon/` (Orchestrates the robot's "brain" process).
-    * *Hardware Interface (IO):* `venv/Lib/site-packages/reachy_mini/io/` (Communication protocols for simulation and real hardware).
-
-### Human-Computer Interaction (HCI), Perception & Comms Interface
-- **Functional Role:** The high-level application layer that manages multimodal perception (STT, Live Computer Vision), personality modeling, output generation (TTS), and **External Alerting**.
-- **Associated Sub-Categories & File Paths:**
-    * *AI Logic Engine:* `interactive_reachy.py` (Main entry point for voice interaction).
-    * *Vision Tracker:* `webcam_tracker.py` (Real-time OpenCV/MediaPipe pose estimation engine).
-    * *Alert Dispatcher:* `network_alerts.py` (Asynchronous webhook engine for remote caregiver notification).
-    * *Validation & Monitoring:* `test_reachy.py` (Couples vision logic with physical kinematic responses and TTS alerts).
+    * *AI Logic Engine:* `interactive_reachy.py` (Voice assistant).
+    * *Vision & Control:* `test_reachy.py` / `webcam_tracker.py` (Vision loop & P-Controller).
+    * *Alert Dispatcher:* `network_alerts.py` (Communication bridge).
 
 ---
 

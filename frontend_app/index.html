@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reachy Mini | Healthcare Dashboard</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --accent: #38bdf8;
+            --critical: #ef4444;
+            --warning: #f59e0b;
+            --safe: #22c55e;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .online { background: var(--safe); box-shadow: 0 0 10px var(--safe); }
+        .offline { background: var(--critical); }
+        
+        .grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-top: 20px; }
+        .card { background: var(--card); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        h2 { margin-top: 0; font-size: 1.1rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+        
+        .telemetry-val { font-size: 2rem; font-weight: bold; margin: 10px 0; }
+        .label { color: #94a3b8; font-size: 0.8rem; }
+        
+        .notification-feed { height: 300px; overflow-y: auto; display: flex; flex-direction: column-reverse; gap: 10px; }
+        .alert-item { padding: 12px; border-left: 4px solid var(--accent); background: #334155; border-radius: 4px; animation: slideIn 0.3s ease; }
+        .alert-CRITICAL { border-left-color: var(--critical); background: #450a0a; }
+        .alert-WARNING { border-left-color: var(--warning); background: #451a03; }
+        
+        .controls { display: flex; gap: 10px; margin-top: 15px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-danger { background: var(--critical); color: white; }
+        .btn-action { background: var(--accent); color: #0f172a; }
+        button:hover { opacity: 0.8; transform: translateY(-2px); }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>REACHY MINI <small style="font-weight: normal; font-size: 0.9rem; opacity: 0.6;">Caregiver Link</small></h1>
+        <div>
+            <span id="status-dot" class="status-dot offline"></span>
+            <span id="status-text">DISCONNECTED</span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Left: Telemetry & Controls -->
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="card">
+                <h2>Live Telemetry</h2>
+                <div class="label">POSTURE STATE</div>
+                <div id="pose-state" class="telemetry-val">SEARCHING</div>
+                <div class="label">DISTANCE HEURISTIC</div>
+                <div id="dist-val" class="telemetry-val">0.00</div>
+            </div>
+
+            <div class="card">
+                <h2>Remote Commands</h2>
+                <div class="controls">
+                    <button class="btn-danger" onclick="sendCommand('force_hide')">FORCE RETRACT</button>
+                    <button class="btn-action" onclick="sendCommand('trigger_wakeup')">ACTIVE SEARCH</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Alert Feed -->
+        <div class="card">
+            <h2>Notification Center</h2>
+            <div id="feed" class="notification-feed">
+                <div class="alert-item">System ready. Waiting for robot link...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const robotIp = window.location.hostname || "127.0.0.1";
+        const wsUrl = `ws://${robotIp}:8001/ws/telemetry`;
+        const apiUrl = `http://${robotIp}:8001/api`;
+
+        let ws;
+
+        function connect() {
+            ws = new WebSocket(wsUrl);
+            const dot = document.getElementById('status-dot');
+            const txt = document.getElementById('status-text');
+
+            ws.onopen = () => {
+                dot.className = "status-dot online";
+                txt.innerText = "CONNECTED";
+            };
+
+            ws.onclose = () => {
+                dot.className = "status-dot offline";
+                txt.innerText = "OFFLINE - RECONNECTING";
+                setTimeout(connect, 3000);
+            };
+
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                if (msg.type === "ALERT") {
+                    addAlert(msg.data);
+                    // Update telemetry if included in alert
+                    document.getElementById('pose-state').innerText = msg.data.event_type === "RECOVERY" ? "SAFE" : msg.data.event_type;
+                }
+            };
+        }
+
+        function addAlert(data) {
+            const feed = document.getElementById('feed');
+            const item = document.createElement('div');
+            item.className = `alert-item alert-${data.severity}`;
+            item.innerHTML = `
+                <div style="font-weight:bold; font-size: 0.8rem; opacity: 0.7;">${data.timestamp.split('T')[1].split('.')[0]} - ${data.severity}</div>
+                <div>${data.message}</div>
+            `;
+            feed.appendChild(item);
+        }
+
+        async function sendCommand(cmd) {
+            try {
+                const response = await fetch(`${apiUrl}/commands`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({command: cmd})
+                });
+                console.log("Command sent:", cmd);
+            } catch (e) {
+                console.error("Failed to send command", e);
+            }
+        }
+
+        connect();
+    </script>
+</body>
+</html>

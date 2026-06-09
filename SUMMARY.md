@@ -58,3 +58,8 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Component**: Networking & Communications (Healthcare Phase 2)
   - **Change**: Implemented 'network_alerts.py' with an asynchronous 'AlertDispatcher' class and integrated it into 'webcam_tracker.py'.
   - **Reason**: To enable non-blocking caregiver notifications via webhooks, ensuring external alerts are fired without interrupting the real-time robot control loop.
+
+- **2026-06-09**: 
+  - **Component**: Full-Stack IoT Ecosystem (Phase 3)
+  - **Change**: Built a local FastAPI backend (`backend_server/app.py`) and a Vanilla JS frontend dashboard (`frontend_app/index.html`).
+  - **Reason**: To replace third-party webhooks with a private, real-time monitoring solution using WebSockets for live telemetry and REST for remote commands.
