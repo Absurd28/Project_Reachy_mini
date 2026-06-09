@@ -4,9 +4,7 @@ import TelemetryPanel from './components/TelemetryPanel';
 import ControlPanel from './components/ControlPanel';
 import EventFeed from './components/EventFeed';
 
-const ROBOT_IP = (window.location.hostname === "localhost" || window.location.hostname === "") 
-  ? "127.0.0.1" 
-  : window.location.hostname;
+const ROBOT_IP = "127.0.0.1";
 const WS_URL = `ws://${ROBOT_IP}:8000/ws/telemetry`;
 
 function App() {

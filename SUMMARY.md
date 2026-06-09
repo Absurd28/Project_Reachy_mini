@@ -66,8 +66,8 @@ This file serves as a chronological log of all modifications, feature additions,
 
 - **2026-06-09**: 
   - **Component**: Network Architecture (Fix)
-  - **Change**: Aligned all communication to Port 8000, implemented a 30 FPS async telemetry broadcast loop in FastAPI, and added exponential backoff to React WebSocket connection.
-  - **Reason**: To resolve event loop blocking, unify the network topology, and ensure a robust, self-healing connection between the robot and dashboard.
+  - **Change**: Explicitly aligned all communication to Port 8000 and set fully permissive CORS.
+  - **Reason**: To resolve the WebSocket 1006 error and ensure seamless connectivity during local development.
 
 ## Debugging & Verification Protocol
 1.  **Backend Health**: `GET http://127.0.0.1:8000/api/health` should return 200 OK.
