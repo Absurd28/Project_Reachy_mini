@@ -1,9 +1,11 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import uvicorn
 import json
 import asyncio
+import os
 
 app = FastAPI()
 
@@ -14,6 +16,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Path to the frontend file
+FRONTEND_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend_app", "index.html")
 
 # --- WebSocket Manager ---
 class ConnectionManager:
@@ -47,13 +52,18 @@ class AlertPayload(BaseModel):
     telemetry: dict = None
 
 # --- REST Endpoints ---
+@app.get("/")
+async def get_dashboard():
+    """Serves the frontend dashboard from the root URL."""
+    return FileResponse(FRONTEND_PATH)
+
 @app.post("/api/alerts")
 async def receive_alert(alert: AlertPayload):
     """Receives alerts from the Edge logic and broadcasts to all Dashboards."""
     print(f"Alert Received: {alert.event_type} - {alert.severity}")
     await manager.broadcast(json.dumps({
         "type": "ALERT",
-        "data": alert.dict()
+        "data": alert.model_dump()
     }))
     return {"status": "dispatched"}
 

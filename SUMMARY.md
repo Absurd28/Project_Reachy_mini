@@ -63,3 +63,8 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Component**: Full-Stack IoT Ecosystem (Phase 3)
   - **Change**: Built a local FastAPI backend (`backend_server/app.py`) and a Vanilla JS frontend dashboard (`frontend_app/index.html`).
   - **Reason**: To replace third-party webhooks with a private, real-time monitoring solution using WebSockets for live telemetry and REST for remote commands.
+
+- **2026-06-09**: 
+  - **Component**: Backend Stability & UI
+  - **Change**: Migrated to Pydantic 'model_dump()' and added a root route to serve 'index.html' in 'backend_server/app.py'.
+  - **Reason**: Resolved deprecation warnings and fixed the 404 error when accessing the dashboard root URL.
