@@ -3,13 +3,14 @@ import requests
 import numpy as np
 from reachy_mini import ReachyMini
 from reachy_mini.utils import create_head_pose
+from patient_tracker import PatientTracker, get_tracking_angles
 
 # --- Constants for Reachy Mini ---
 DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PORT = 8000
 MIN_Z = 0   # Retracted height (mm)
 MAX_Z = 35  # Fully emerged height (mm)
-NEUTRAL_Z = 30 # Default viewing height (mm)
+NEUTRAL_Z = 20 # Optimized safety-tuned height
 
 def check_daemon_running(host=DEFAULT_HOST, port=DEFAULT_PORT):
     """Checks if the reachy-mini-daemon is alive via its REST API."""
@@ -21,11 +22,7 @@ def check_daemon_running(host=DEFAULT_HOST, port=DEFAULT_PORT):
         return False
 
 def move_head(mini, roll=0, pitch=0, yaw=0, z=NEUTRAL_Z, duration=1.5):
-    """
-    Moves the 6-DOF head using Orbita3D neck kinematics.
-    roll, pitch, yaw are in degrees.
-    z is height in mm (0 to 35).
-    """
+    """Moves the 6-DOF head using Orbita3D neck kinematics."""
     target_pose = create_head_pose(
         roll=roll, 
         pitch=pitch, 
@@ -35,69 +32,51 @@ def move_head(mini, roll=0, pitch=0, yaw=0, z=NEUTRAL_Z, duration=1.5):
         mm=True
     )
     mini.goto_target(head=target_pose, duration=duration)
-    # Note: we don't sleep here to allow for non-blocking command chaining if needed, 
-    # but the duration parameter handles interpolation.
 
-def hide_in_shell(mini):
-    """Retracts the neck and aligns the head to hide inside the body opening."""
-    print("Action: Retracting into shell...")
-    # Align RPY to 0 and drop Z to minimum
-    move_head(mini, roll=0, pitch=0, yaw=0, z=MIN_Z, duration=1.2)
-    time.sleep(1.2)
-
-def emerge_from_shell(mini):
-    """Raises the neck to its default viewing height."""
-    print("Action: Emerging from shell...")
-    move_head(mini, roll=0, pitch=0, yaw=0, z=NEUTRAL_Z, duration=1.5)
-    time.sleep(1.5)
-
-def run_animation_sequence():
-    # 1. Pre-flight check: Ensure daemon is reachable
+def run_patient_monitoring():
+    """Runs the Phase 1: Patient Perception & Tracking Simulation."""
     print(f"Checking daemon status at {DEFAULT_HOST}:{DEFAULT_PORT}...")
     if not check_daemon_running():
         print("ERROR: reachy-mini-daemon is not running!")
-        print("Please run: reachy-mini-daemon --sim --scene minimal --no-media")
         return
 
+    tracker = PatientTracker()
+    
     try:
-        # 2. Connect to the robot
         with ReachyMini(host=DEFAULT_HOST, port=DEFAULT_PORT, media_backend='no_media') as mini:
-            print("Connected. Starting animation loop. Press Ctrl+C to stop.")
+            print("Healthcare Monitoring Layer Active. Tracking Patient...")
             
-            # Start in retracted state
-            hide_in_shell(mini)
+            # Start in neutral position
+            move_head(mini, z=NEUTRAL_Z, duration=1.0)
             
-            while True:
-                # a. Emerge from the shell
-                emerge_from_shell(mini)
+            for x, y in tracker.stream_mock_telemetry():
+                state, dist = tracker.calculate_state(x, y)
+                yaw, pitch = get_tracking_angles(x, y)
                 
-                # b. Scan the room (Smoothly varying pitch and yaw)
-                print("Action: Scanning the room...")
-                move_head(mini, yaw=30, pitch=-10, z=NEUTRAL_Z, duration=2.0)
-                time.sleep(2.0)
-                move_head(mini, yaw=-30, pitch=10, z=NEUTRAL_Z, duration=2.0)
-                time.sleep(2.0)
+                print(f"[TELEMETRY] Pos: ({x:.2f}, {y:.2f}) | Dist: {dist:.2f}m | State: {state}")
                 
-                # c. Tilt head curiously (Roll)
-                print("Action: Tilting head curiously...")
-                move_head(mini, roll=15, pitch=0, yaw=0, z=NEUTRAL_Z, duration=1.0)
-                time.sleep(1.0)
-                move_head(mini, roll=-15, pitch=0, yaw=0, z=NEUTRAL_Z, duration=1.0)
-                time.sleep(1.0)
+                if state == 'EXIT_BREACH':
+                    print("!!! ALERT: BREACH DETECTED !!!")
+                    # Warning Gesture: Drop antennas (if applicable in sim) and retract
+                    # Since we can't directly control antennas easily in this SDK snippet, 
+                    # we focus on the quick retraction alert.
+                    move_head(mini, roll=0, pitch=20, yaw=0, z=MIN_Z, duration=0.5)
+                    break 
                 
-                # Return to neutral for a second
-                move_head(mini, roll=0, pitch=0, yaw=0, z=NEUTRAL_Z, duration=1.0)
-                time.sleep(1.0)
+                elif state == 'WARNING':
+                    # Look at target but with slight "concern" (faster movements or slight roll)
+                    move_head(mini, roll=5, pitch=pitch, yaw=yaw, z=NEUTRAL_Z, duration=0.3)
+                
+                else:
+                    # Normal smooth tracking
+                    move_head(mini, roll=0, pitch=pitch, yaw=yaw, z=NEUTRAL_Z, duration=0.5)
 
-                # d. Quickly retract back into the shell
-                print("Action: Quick retraction!")
-                move_head(mini, roll=0, pitch=0, yaw=0, z=MIN_Z, duration=0.6) # Faster duration
-                time.sleep(2.0) # Stay hidden for 2 seconds
+            print("Monitoring sequence complete.")
 
     except KeyboardInterrupt:
-        print("\nAnimation stopped by user.")
+        print("\nMonitoring stopped by user.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    run_animation_sequence()
+    run_patient_monitoring()

@@ -1,0 +1,20 @@
+# PROJECT PROGRESS SUMMARY: Reachy Mini AI Assistant
+
+This file serves as a chronological log of all modifications, feature additions, and architectural updates, maintained automatically via the "Update-on-Change" protocol.
+
+## Modification Log
+
+- **2026-06-09**: 
+  - **Component**: Architecture & DevSecOps
+  - **Change**: Established 'PROJECT_WORKSPACE_ARCHITECTURE.md' and 'map_workspace.py'.
+  - **Reason**: Defined the project's structural baseline and automated workspace mapping.
+
+- **2026-06-09**: 
+  - **Component**: Project Management
+  - **Change**: Initialized 'SUMMARY.md' and activated the "Update-on-Change" DevSecOps protocol.
+  - **Reason**: To ensure documentation and repository synchronization remain in lockstep with code changes.
+
+- **2026-06-09**: 
+  - **Component**: Perception & Kinematics (Healthcare Phase 1)
+  - **Change**: Implemented 'patient_tracker.py' and integrated spatial tracking into 'test_reachy.py'.
+  - **Reason**: To establish a local healthcare monitoring layer with reactive robot behaviors (active looking and alert retraction).
