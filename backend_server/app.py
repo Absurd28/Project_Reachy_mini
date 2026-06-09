@@ -72,7 +72,7 @@ app = FastAPI(lifespan=lifespan)
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # Standardizing for multi-device network access
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -83,7 +83,7 @@ FRONTEND_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "fronte
 # --- REST Endpoints ---
 @app.get("/api/health")
 async def health_check():
-    return {"status": "online", "robot_state": "connected", "port": 8000}
+    return {"status": "online", "robot_state": "connected", "port": 8001}
 
 @app.post("/api/internal/telemetry")
 async def receive_internal_telemetry(data: TelemetryData):

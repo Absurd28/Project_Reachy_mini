@@ -3,13 +3,14 @@ import { Activity, Radio, AlertTriangle, ShieldCheck } from 'lucide-react';
 import TelemetryPanel from './components/TelemetryPanel';
 import ControlPanel from './components/ControlPanel';
 import EventFeed from './components/EventFeed';
+import LiveViewport from './components/LiveViewport';
 
-const ROBOT_IP = "127.0.0.1";
-const WS_URL = `ws://${ROBOT_IP}:8001/ws/telemetry`;
+const ROBOT_HOST = window.location.hostname;
+const WS_URL = `ws://${ROBOT_HOST}:8001/ws/telemetry`;
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
-  const [telemetryState, setTelemetryState] = useState({ posture: '---', distance: null });
+  const [telemetryState, setTelemetryState] = useState({ posture: '---', distance: null, x: 0, y: 0 });
   const [jointState, setJointState] = useState({});
   const [alerts, setAlerts] = useState([]);
   const wsRef = useRef(null);
@@ -26,11 +27,11 @@ function App() {
 
   useEffect(() => {
     let reconnectTimeout;
+    let connectDelay;
 
     const connect = () => {
-      if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
-        return;
-      }
+      // Prevent double-connection during React Dev mode rapid remounts
+      if (wsRef.current) return;
 
       console.log(`Attempting connection to: ${WS_URL}`);
       addAlert(`Connecting to ${WS_URL}...`, "INFO");
@@ -40,7 +41,7 @@ function App() {
 
       ws.onopen = () => {
         setIsConnected(true);
-        retryDelayRef.current = 2000; // Reset backoff on success
+        retryDelayRef.current = 2000;
         addAlert("System link established.", "INFO");
         console.log("Handshake successful: WebSocket Link Active.");
       };
@@ -58,7 +59,6 @@ function App() {
             
             reconnectTimeout = setTimeout(() => {
                 connect();
-                // Exponential backoff capped at 30s
                 retryDelayRef.current = Math.min(retryDelayRef.current * 2, 30000);
             }, retryDelayRef.current);
         }
@@ -67,22 +67,40 @@ function App() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          // Standardized Telemetry Update
-          setTelemetryState(data);
           
-          // Background updates for other system components
-          if (data.type === "JOINT_UPDATE") setJointState(data.data);
-          if (data.type === "ALERT") addAlert(data.data.message, data.data.severity);
+          // Robust Message Routing
+          if (data.posture !== undefined) {
+             // Vision Loop Telemetry (Direct Payload)
+             setTelemetryState(prev => ({
+                ...prev,
+                ...data
+             }));
+          } else if (data.type === "JOINT_UPDATE") {
+             setJointState(data.data);
+          } else if (data.type === "ALERT") {
+             addAlert(data.data.message, data.data.severity);
+             if (data.data.telemetry) {
+                setTelemetryState(prev => ({
+                    ...prev,
+                    ...data.data.telemetry
+                }));
+             }
+          }
         } catch (e) {
           console.error("Message parsing error:", e);
         }
       };
     };
 
-    connect();
+    // Slight delay to ensure previous unmounts have fully cleared the socket
+    connectDelay = setTimeout(connect, 200);
 
     return () => {
-      if (wsRef.current) wsRef.current.close();
+      clearTimeout(connectDelay);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
       clearTimeout(reconnectTimeout);
     };
   }, [addAlert]);
@@ -106,7 +124,7 @@ function App() {
             )}
           </div>
           <button 
-            onClick={() => fetch(`http://${ROBOT_IP}:8001/api/commands`, {
+            onClick={() => fetch(`http://${ROBOT_HOST}:8001/api/commands`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ command: 'E-STOP' })
@@ -130,20 +148,19 @@ function App() {
                 System Modes <Activity size={14} />
              </h2>
              <div className="flex gap-2 mb-6">
-                <button onClick={() => fetch(`http://${ROBOT_IP}:8001/api/commands`, { method: 'POST', body: JSON.stringify({command: 'STIFF'})})} className="flex-1 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm font-semibold transition-colors">STIFF</button>
-                <button onClick={() => fetch(`http://${ROBOT_IP}:8001/api/commands`, { method: 'POST', body: JSON.stringify({command: 'COMPLIANT'})})} className="flex-1 py-2 bg-green-500 hover:bg-green-400 text-slate-900 rounded text-sm font-semibold transition-colors">COMPLIANT</button>
+                <button onClick={() => fetch(`http://${ROBOT_HOST}:8001/api/commands`, { method: 'POST', body: JSON.stringify({command: 'STIFF'})})} className="flex-1 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm font-semibold transition-colors">STIFF</button>
+                <button onClick={() => fetch(`http://${ROBOT_HOST}:8001/api/commands`, { method: 'POST', body: JSON.stringify({command: 'COMPLIANT'})})} className="flex-1 py-2 bg-green-500 hover:bg-green-400 text-slate-900 rounded text-sm font-semibold transition-colors">COMPLIANT</button>
              </div>
           </div>
         </div>
 
         {/* Center Column: Viewport */}
-        <div className="bg-black rounded-xl border border-slate-700 relative overflow-hidden flex flex-col justify-center items-center shadow-inner">
-           <Radio size={48} className="text-slate-600 mb-4" />
-           <p className="text-slate-500 text-sm tracking-wide">WAITING FOR MEDIA STREAM...</p>
+        <div className="bg-black rounded-xl border border-slate-700 relative overflow-hidden flex flex-col shadow-inner min-h-[400px]">
+           <LiveViewport telemetry={telemetryState} isConnected={isConnected} />
         </div>
 
         {/* Right Column: Controls */}
-        <ControlPanel jointState={jointState} addAlert={addAlert} apiUrl={`http://${ROBOT_IP}:8001/api`} />
+        <ControlPanel jointState={jointState} addAlert={addAlert} apiUrl={`http://${ROBOT_HOST}:8001/api`} />
         
       </main>
 
