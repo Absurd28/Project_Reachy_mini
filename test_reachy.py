@@ -11,12 +11,12 @@ DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PORT = 8000
 MIN_Z = 0   
 MAX_Z = 35  
-NEUTRAL_Z = 20 
+NEUTRAL_Z = 25 # Increased from 20 to provide better clearance for extreme tilts
 
-# Control Constants (P-Controller)
-KP = 15.0  # Proportional Gain
-YAW_LIMIT = 45
-PITCH_LIMIT = 30
+# Control Constants (P-Controller) - Tightened for safety
+KP = 12.0  # Slightly reduced for more conservative tracking
+YAW_LIMIT = 35 # Reduced from 45
+PITCH_LIMIT = 20 # Reduced from 30
 
 # Initialize TTS
 engine = pyttsx3.init()

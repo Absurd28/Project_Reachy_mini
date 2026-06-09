@@ -48,3 +48,8 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Component**: Control & Kinematics (Healthcare Phase 3)
   - **Change**: Implemented a Proportional (P) controller in 'test_reachy.py' for real-time head tracking based on normalized vision error (X, Y).
   - **Reason**: To enable smooth, continuous "look-at" behavior where the robot dynamically follows the patient's movements during monitoring.
+
+- **2026-06-09**: 
+  - **Component**: Kinematics & Safety
+  - **Change**: Increased NEUTRAL_Z to 25mm and tightened joint limits (Yaw: 35, Pitch: 20) in 'test_reachy.py'.
+  - **Reason**: Resolved 'IK error: Collision detected' by providing more physical clearance for the Orbita3D neck and preventing out-of-bounds trajectory requests.
