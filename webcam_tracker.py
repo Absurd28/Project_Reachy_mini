@@ -3,12 +3,14 @@ import mediapipe as mp
 import numpy as np
 import time
 import math
+from network_alerts import AlertDispatcher
 
 class WebcamTracker:
     def __init__(self, warning_shoulder_width=0.15, breach_shoulder_width=0.08):
         self.mp_pose = mp.solutions.pose
         self.pose = self.mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
         self.mp_draw = mp.solutions.drawing_utils
+        self.dispatcher = AlertDispatcher()
         
         self.warning_shoulder_width = warning_shoulder_width
         self.breach_shoulder_width = breach_shoulder_width
@@ -117,6 +119,12 @@ class WebcamTracker:
                     if not self.is_breached:
                         alert_trigger = "BREACH"
                         self.is_breached = True
+                        # Dispatch Network Alert (Non-blocking)
+                        self.dispatcher.send_caregiver_alert(
+                            event_type="EXIT_BREACH",
+                            severity="CRITICAL",
+                            message="Patient has left the tracking zone or disappeared."
+                        )
                     state = "EXIT_BREACH"
                 else:
                     state = f"SEARCHING ({self.disappearance_limit - missing_duration:.1f}s)"

@@ -10,8 +10,9 @@ The following conceptual tree illustrates the high-level organization of the pro
 .
 ├── interactive_reachy.py       # Main HCI / Voice AI Engine
 ├── test_reachy.py              # Orchestration, Patient Monitoring & Vision Loop
-├── patient_tracker.py          # Mock Spatial Perception (Deprecated)
 ├── webcam_tracker.py           # Live OpenCV/MediaPipe Pose Estimation
+├── network_alerts.py           # Non-blocking Webhook Alert Dispatcher
+├── patient_tracker.py          # Mock Spatial Perception (Deprecated)
 ├── map_workspace.py            # Architectural Verification Script
 ├── PROJECT_SUMMARY.md          # Technical Log & Milestones
 ├── start_sim.sh                # Simulation Bootstrapper
@@ -30,6 +31,7 @@ The project follows a **Hardware-in-the-Loop (HiL)** development model where the
 
 **Operational Responsibilities:**
 - **Perception Layer:** Voice capture, NLP intent parsing, and **Live Vision-Based Patient Tracking**.
+- **Communications Layer:** External caregiver notifications via **Asynchronous Webhooks**.
 - **Orchestration Layer:** Managing the state machine between "Idle", "Active", and **"Healthcare Alert"**.
 - **Execution Layer:** Translating high-level intents into low-level joint trajectories.
 
@@ -55,11 +57,12 @@ The project follows a **Hardware-in-the-Loop (HiL)** development model where the
     * *Background Runtimes:* `venv/Lib/site-packages/reachy_mini/daemon/` (Orchestrates the robot's "brain" process).
     * *Hardware Interface (IO):* `venv/Lib/site-packages/reachy_mini/io/` (Communication protocols for simulation and real hardware).
 
-### Human-Computer Interaction (HCI) & Perception Interface
-- **Functional Role:** The high-level application layer that manages multimodal perception (STT, Live Computer Vision), personality modeling, and output generation (TTS).
+### Human-Computer Interaction (HCI), Perception & Comms Interface
+- **Functional Role:** The high-level application layer that manages multimodal perception (STT, Live Computer Vision), personality modeling, output generation (TTS), and **External Alerting**.
 - **Associated Sub-Categories & File Paths:**
     * *AI Logic Engine:* `interactive_reachy.py` (Main entry point for voice interaction).
     * *Vision Tracker:* `webcam_tracker.py` (Real-time OpenCV/MediaPipe pose estimation engine).
+    * *Alert Dispatcher:* `network_alerts.py` (Asynchronous webhook engine for remote caregiver notification).
     * *Validation & Monitoring:* `test_reachy.py` (Couples vision logic with physical kinematic responses and TTS alerts).
 
 ---

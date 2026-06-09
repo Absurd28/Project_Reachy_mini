@@ -53,3 +53,8 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Component**: Kinematics & Safety
   - **Change**: Increased NEUTRAL_Z to 25mm and tightened joint limits (Yaw: 35, Pitch: 20) in 'test_reachy.py'.
   - **Reason**: Resolved 'IK error: Collision detected' by providing more physical clearance for the Orbita3D neck and preventing out-of-bounds trajectory requests.
+
+- **2026-06-09**: 
+  - **Component**: Networking & Communications (Healthcare Phase 2)
+  - **Change**: Implemented 'network_alerts.py' with an asynchronous 'AlertDispatcher' class and integrated it into 'webcam_tracker.py'.
+  - **Reason**: To enable non-blocking caregiver notifications via webhooks, ensuring external alerts are fired without interrupting the real-time robot control loop.
