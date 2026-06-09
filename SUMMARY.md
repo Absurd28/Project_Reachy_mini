@@ -65,9 +65,9 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Reason**: To replace third-party webhooks with a private, real-time monitoring solution using WebSockets for live telemetry and REST for remote commands.
 
 - **2026-06-09**: 
-  - **Component**: Network Architecture (Fix)
-  - **Change**: Explicitly aligned all communication to Port 8000 and set fully permissive CORS.
-  - **Reason**: To resolve the WebSocket 1006 error and ensure seamless connectivity during local development.
+  - **Component**: Telemetry Pipeline (Full-Stack Bridge)
+  - **Change**: Established a real-time data bridge between the OpenCV vision loop and the React dashboard via a new `POST /api/internal/telemetry` endpoint and WebSocket broadcaster.
+  - **Reason**: To ensure live posture and spatial data are visualized on the caregiver dashboard without blocking the robot's perception loop.
 
 ## Debugging & Verification Protocol
 1.  **Backend Health**: `GET http://127.0.0.1:8000/api/health` should return 200 OK.

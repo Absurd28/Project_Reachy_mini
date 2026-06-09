@@ -79,6 +79,8 @@ The workspace integrity is verified using `map_workspace.py`, which programmatic
 
 ---
 
+---
+
 ## 6. NETWORK TOPOLOGY & PORTS
 
 - **FastAPI Edge Server**: Port `8000` (REST & WebSockets)
@@ -86,3 +88,12 @@ The workspace integrity is verified using `map_workspace.py`, which programmatic
 - **Reachy Mini Daemon (Sim)**: Port `8000` (Shared/Direct - Standardized)
 - **Websocket Path**: `ws://127.0.0.1:8000/ws/telemetry`
 - **CORS Whitelist**: `http://localhost:5173`, `http://127.0.0.1:5173`
+
+## 7. DATA PIPELINE ARCHITECTURE
+
+### Vision-to-Dashboard Bridge
+The project uses an asynchronous "Push-then-Broadcast" pattern to deliver live telemetry:
+1.  **Perception**: `webcam_tracker.py` captures posture and spatial data via OpenCV/MediaPipe.
+2.  **Dispatch**: A non-blocking thread in the vision loop pushes a data dictionary (`x`, `y`, `posture`, `distance`) to `POST /api/internal/telemetry` every 100ms.
+3.  **Broadcast**: The FastAPI backend iterates through the `connected_clients` set and broadcasts the raw payload directly using `client.send_json()`.
+4.  **Visualization**: The React dashboard receives the raw telemetry object in its `onmessage` handler and updates the `telemetryState` hook for real-time rendering.

@@ -9,7 +9,7 @@ const WS_URL = `ws://${ROBOT_IP}:8000/ws/telemetry`;
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
-  const [telemetry, setTelemetry] = useState({ posture: '---', distance: null });
+  const [telemetryState, setTelemetryState] = useState({ posture: '---', distance: null });
   const [jointState, setJointState] = useState({});
   const [alerts, setAlerts] = useState([]);
   const wsRef = useRef(null);
@@ -66,20 +66,13 @@ function App() {
 
       ws.onmessage = (event) => {
         try {
-          const msg = JSON.parse(event.data);
-          if (msg.type === "KEEP_ALIVE") return;
+          const data = JSON.parse(event.data);
+          // Standardized Telemetry Update
+          setTelemetryState(data);
           
-          if (msg.type === "ALERT") {
-            addAlert(msg.data.message, msg.data.severity);
-            if (msg.data.telemetry) {
-              setTelemetry({
-                posture: msg.data.telemetry.posture || '---',
-                distance: msg.data.telemetry.distance || null
-              });
-            }
-          } else if (msg.type === "JOINT_UPDATE") {
-            setJointState(msg.data);
-          }
+          // Background updates for other system components
+          if (data.type === "JOINT_UPDATE") setJointState(data.data);
+          if (data.type === "ALERT") addAlert(data.data.message, data.data.severity);
         } catch (e) {
           console.error("Message parsing error:", e);
         }
@@ -131,7 +124,7 @@ function App() {
         
         {/* Left Column: Telemetry & Status */}
         <div className="flex flex-col gap-6">
-          <TelemetryPanel telemetry={telemetry} isConnected={isConnected} />
+          <TelemetryPanel telemetry={telemetryState} isConnected={isConnected} />
           <div className="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-lg">
              <h2 className="text-sky-400 text-xs uppercase tracking-wider font-bold mb-4 flex justify-between">
                 System Modes <Activity size={14} />

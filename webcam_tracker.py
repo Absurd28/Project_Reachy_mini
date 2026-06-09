@@ -3,6 +3,8 @@ import mediapipe as mp
 import numpy as np
 import time
 import math
+import requests
+import threading
 from network_alerts import AlertDispatcher
 
 class WebcamTracker:
@@ -18,6 +20,32 @@ class WebcamTracker:
         self.disappearance_limit = 3.0 # seconds
         self.is_breached = False
         
+        # Telemetry Throttling
+        self.last_push_time = 0
+        self.push_interval = 0.1 # 100ms (10 FPS for telemetry)
+
+    def _push_to_backend(self, payload):
+        """Internal threaded POST to avoid blocking OpenCV."""
+        try:
+            # Use the standardized internal telemetry endpoint
+            requests.post("http://127.0.0.1:8000/api/internal/telemetry", json=payload, timeout=0.1)
+        except Exception:
+            pass # Silently fail to maintain vision loop stability
+
+    def push_telemetry(self, x_val, y_val, current_posture, current_dist):
+        """Throttled non-blocking telemetry dispatch (approx 10 FPS)."""
+        now = time.time()
+        if now - self.last_push_time > 0.1: # 100ms throttle
+            payload = {
+                'x': float(x_val), 
+                'y': float(y_val), 
+                'posture': str(current_posture), 
+                'distance': float(current_dist)
+            }
+            # Dispatch in background thread to prevent camera stutter
+            threading.Thread(target=self._push_to_backend, args=(payload,), daemon=True).start()
+            self.last_push_time = now
+
     def analyze_pose(self, landmarks):
         try:
             shoulder_y = (landmarks[11].y + landmarks[12].y) / 2
@@ -136,6 +164,9 @@ class WebcamTracker:
             
             if self.is_breached or state == "EXIT_BREACH":
                 self.draw_critical_breach(image)
+
+            # --- NEW: PUSH TELEMETRY TO DASHBOARD ---
+            self.push_telemetry(error_x, error_y, state, dist_val)
 
             yield image, state, dist_val, alert_trigger, (error_x, error_y)
 
