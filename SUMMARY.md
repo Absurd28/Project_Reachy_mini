@@ -33,3 +33,8 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Component**: Dependencies (MediaPipe)
   - **Change**: Downgraded MediaPipe to version 0.10.13 to restore the legacy 'solutions' API on Python 3.12.
   - **Reason**: Resolved 'AttributeError: module mediapipe has no attribute solutions' caused by API removals in newer versions.
+
+- **2026-06-09**: 
+  - **Component**: Vision UI/UX (Healthcare Phase 2.5)
+  - **Change**: Enhanced 'webcam_tracker.py' with a semi-transparent dashboard, state-based skeleton colors, pulsing red borders, and a blurred critical breach overlay.
+  - **Reason**: To provide rich, high-alert visual feedback for local monitoring, improving situational awareness during safety events.
