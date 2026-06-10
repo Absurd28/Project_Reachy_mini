@@ -84,6 +84,11 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Change**: Implemented 'voice_monitor.py' for continuous distress keyword detection, integrated TTS feedback, and updated 'backend_server/app.py' to trigger emergency robot reactions. Unified the startup sequence in 'start_backend.py'.
   - **Reason**: To enable proactive patient safety monitoring via voice, allowing the robot to respond physically and alert caregivers when distress phrases are detected.
 
+- **2026-06-10**: 
+  - **Component**: AI Behavior & Robotics (Phase 4)
+  - **Change**: Implemented 'routine_manager.py' for proactive scheduling, 'nlp_parser.py' for zero-shot intent classification, and upgraded 'voice_monitor.py' to process complex user intents. Integrated 'trigger_proactive_search' logic into 'backend_server/app.py'.
+  - **Reason**: To transition the device into a proactive assistant capable of initiating medication checks and understanding natural language context (e.g., medical distress vs. confirmation).
+
 ## Debugging & Verification Protocol
 1.  **Backend Health**: `GET http://127.0.0.1:8000/api/health` should return 200 OK.
 2.  **WebSocket Handshake**: Browser console should log "Handshake successful: WebSocket Link Active."

@@ -20,33 +20,25 @@ if __name__ == "__main__":
     os.chdir(script_dir)
     
     print("=====================================================")
-    print("      REACHY MINI: MULTI-SERVICE ECOSYSTEM BOOT      ")
+    print("      REACHY MINI: PROACTIVE AI ECOSYSTEM BOOT       ")
     print("=====================================================")
     
-    # Unified Startup Sequence
-    # Note: Backend is launched in a NEW console so its logs are separate from this manager
-    launch_service("FastAPI Backend", [
-        sys.executable, "start_backend.py"
-    ])
+    # 1. FastAPI Backend (Telemetry Logs)
+    launch_service("FastAPI Backend", [sys.executable, "start_backend.py"])
+    time.sleep(2) 
     
-    time.sleep(2) # Wait for backend port to be cleared and bound
+    # 2. OpenCV Vision Loop
+    launch_service("OpenCV Vision Loop", [sys.executable, "webcam_tracker.py"])
     
-    # OpenCV Vision Loop
-    launch_service("OpenCV Vision Loop", [
-        sys.executable, "webcam_tracker.py"
-    ])
+    # 3. Voice & NLP Monitor
+    launch_service("Voice & NLP Monitor", [sys.executable, "voice_monitor.py"])
     
-    # Voice Distress Monitor
-    launch_service("Voice Distress Monitor", [
-        sys.executable, "voice_monitor.py"
-    ])
+    # 4. Proactive Routine Manager (Phase 4)
+    launch_service("Routine Manager", [sys.executable, "routine_manager.py"])
     
     print("\n[+] FULL SYSTEM BOOT COMPLETED.")
-    print("[*] 1. Backend Server (Telemetry Logs)")
-    print("[*] 2. Vision Tracker (Skeleton Visuals)")
-    print("[*] 3. Voice Monitor (Distress Listening)")
-    print("\n[*] All services are running in their own windows.")
-    print("[*] You can safely close this Manager window.")
+    print("[*] All services are running in their own windows.")
+    print("[*] Proactive medication checks scheduled every 2 minutes.")
     
     time.sleep(5)
     sys.exit(0)
