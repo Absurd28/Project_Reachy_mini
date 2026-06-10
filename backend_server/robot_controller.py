@@ -14,16 +14,23 @@ class RobotController:
         self.port = port
         self.reachy = None
         self.is_connected = False
-        self.neutral_z = 20.0 # Optimized Neutral Z from PROJECT_SUMMARY.md
-        self.min_z = -40.0   # Defined as -0.04m in instructions
+        self.neutral_z = 20.0 # Optimized Neutral Z
+        self.min_z = -40.0
+        
+        # Internal state to track current manual targets
+        self.current_state = {
+            "roll": 0.0,
+            "pitch": 0.0,
+            "yaw": 0.0,
+            "z": self.neutral_z,
+            "antennas": [0.0, 0.0] # Radians
+        }
         
     def connect(self):
         try:
             print(f"[*] Connecting to Reachy Mini SDK at {self.host}:{self.port}...")
-            # Initialize ReachyMini with the correct parameters
             self.reachy = ReachyMini(host=self.host, port=self.port, media_backend='no_media')
             
-            # Fixed: Use correct SDK methods 'enable_motors' instead of 'turn_on'
             print("[*] Enabling motors (Stiffening)...")
             self.reachy.enable_motors() 
             
@@ -36,7 +43,6 @@ class RobotController:
     def disconnect(self):
         if self.reachy:
             try:
-                # Fixed: Use correct SDK methods 'disable_motors' instead of 'turn_off'
                 self.reachy.disable_motors()
                 print("[*] Robot Hardware Layer: RELEASED (COMPLIANT)")
             except:
@@ -45,46 +51,82 @@ class RobotController:
     def _safe_goto(self, roll=0, pitch=0, yaw=0, z=None, antennas=[0, 0], duration=1.5):
         """Internal helper for safe, interpolated movement."""
         if not self.is_connected or not self.reachy:
-            print("[!] Command ignored: Robot not connected or connection failed.")
             return
 
         target_z = z if z is not None else self.neutral_z
         try:
-            # Using official 'create_head_pose' and 'goto_target'
             pose = create_head_pose(roll=roll, pitch=pitch, yaw=yaw, z=target_z, degrees=True, mm=True)
             self.reachy.goto_target(head=pose, antennas=antennas, duration=duration)
         except Exception as e:
             print(f"[!] Kinematic Error: {e}")
 
+    def move_joint(self, joint_name, value):
+        """
+        Updates the target state for a specific joint and commands movement.
+        """
+        if not self.is_connected: return
+
+        # Update internal state based on joint name
+        if joint_name == "neck_roll":
+            self.current_state["roll"] = value
+        elif joint_name == "neck_pitch":
+            self.current_state["pitch"] = value
+        elif joint_name == "neck_yaw":
+            self.current_state["yaw"] = value
+        elif joint_name == "neck_height":
+            self.current_state["z"] = value
+        elif joint_name == "l_antenna":
+            # Convert degrees to radians for SDK
+            self.current_state["antennas"][1] = np.deg2rad(value)
+        elif joint_name == "r_antenna":
+            # Convert degrees to radians for SDK
+            self.current_state["antennas"][0] = np.deg2rad(value)
+        
+        # Execute movement with short duration for responsiveness
+        self._safe_goto(
+            roll=self.current_state["roll"],
+            pitch=self.current_state["pitch"],
+            yaw=self.current_state["yaw"],
+            z=self.current_state["z"],
+            antennas=self.current_state["antennas"],
+            duration=0.1
+        )
+
     # --- Macro Sequences ---
 
+    def sync_state_from_macro(self, roll, pitch, yaw, z, antennas):
+        """Helper to keep manual state in sync with macro results."""
+        self.current_state["roll"] = roll
+        self.current_state["pitch"] = pitch
+        self.current_state["yaw"] = yaw
+        self.current_state["z"] = z
+        self.current_state["antennas"] = list(antennas)
+
     def cmd_wake_up(self):
-        """Move head pitch/roll/yaw to 0, Z-translation to default height, antennas straight up."""
         print("[CONTROL] Executing: WAKE_UP")
+        self.sync_state_from_macro(0, 0, 0, self.neutral_z, [0, 0])
         self._safe_goto(roll=0, pitch=0, yaw=0, z=self.neutral_z, antennas=[0, 0], duration=2.0)
 
     def cmd_hide(self):
-        """Set Z-translation to minimum (e.g., -40mm), pitch/roll/yaw to 0, antennas flat."""
         print("[CONTROL] Executing: HIDE")
+        self.sync_state_from_macro(0, 0, 0, self.min_z, [-0.5, -0.5])
         self._safe_goto(roll=0, pitch=0, yaw=0, z=self.min_z, antennas=[-0.5, -0.5], duration=2.0)
 
     def cmd_curious(self):
-        """Set a slight head roll (e.g., 15 degrees) and raise one antenna while lowering the other."""
         print("[CONTROL] Executing: CURIOUS")
+        self.sync_state_from_macro(15, -5, 0, self.neutral_z, [0.7, -0.3])
         self._safe_goto(roll=15, pitch=-5, yaw=0, z=self.neutral_z, antennas=[0.7, -0.3], duration=1.5)
         time.sleep(1.5)
+        self.sync_state_from_macro(0, 0, 0, self.neutral_z, [0, 0])
         self._safe_goto(roll=0, pitch=0, yaw=0, duration=1.5)
 
     def cmd_scan(self):
-        """Sequence a slow pan left (yaw 30), then right (yaw -30), then center."""
         print("[CONTROL] Executing: SCAN")
-        # Pan Left
         self._safe_goto(yaw=30, duration=1.5)
         time.sleep(1.6)
-        # Pan Right
         self._safe_goto(yaw=-30, duration=2.5)
         time.sleep(2.6)
-        # Center
+        self.sync_state_from_macro(0, 0, 0, self.neutral_z, [0, 0])
         self._safe_goto(yaw=0, duration=1.5)
 
     def cmd_stiff(self):
@@ -96,7 +138,6 @@ class RobotController:
         print("[CONTROL] Motors: COMPLIANT")
 
     def handle_macro(self, action_key):
-        """Mapper for string-based commands from the dashboard."""
         action_map = {
             "wake_up": self.cmd_wake_up,
             "hide": self.cmd_hide,
@@ -107,7 +148,6 @@ class RobotController:
             "E-STOP": self.cmd_compliant
         }
         
-        # Compatibility mapping for existing frontend keys
         compat_map = {
             "emerge_wakeup": "wake_up",
             "retract_hide": "hide",

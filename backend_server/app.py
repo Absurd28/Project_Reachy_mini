@@ -148,10 +148,18 @@ async def receive_command(request: Request, background_tasks: BackgroundTasks):
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 @app.post("/api/commands/joint")
-async def receive_joint_command(cmd: JointCommand):
+async def receive_joint_command(cmd: JointCommand, background_tasks: BackgroundTasks):
+    """
+    Handles manual joint slider updates by bridging them to the hardware layer.
+    """
     if cmd.joint_name in global_robot_state:
         global_robot_state[cmd.joint_name] = cmd.angle
+    
     print(f"JOINT MOVE: {cmd.joint_name} -> {cmd.angle}")
+    
+    # Bridge to physical robot in the background to prevent API blocking
+    background_tasks.add_task(robot.move_joint, cmd.joint_name, cmd.angle)
+    
     return {"status": "success", "joint": cmd.joint_name, "angle": cmd.angle}
 
 # --- WebSocket Endpoint ---
