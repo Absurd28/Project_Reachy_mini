@@ -69,6 +69,11 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Change**: Established a real-time data bridge between the OpenCV vision loop and the React dashboard via a new `POST /api/internal/telemetry` endpoint and WebSocket broadcaster.
   - **Reason**: To ensure live posture and spatial data are visualized on the caregiver dashboard without blocking the robot's perception loop.
 
+- **2026-06-10**: 
+  - **Component**: Control & Hardware Execution (Phase 4)
+  - **Change**: Implemented a non-blocking Hardware Execution Layer in 'backend_server/robot_controller.py' and integrated it into 'backend_server/app.py' using FastAPI 'BackgroundTasks'.
+  - **Reason**: To bridge the web API to the ReachyMini SDK, enabling the React dashboard to trigger smooth, asynchronous kinematic gestures (wake_up, hide, curious, scan) without blocking the HTTP response.
+
 ## Debugging & Verification Protocol
 1.  **Backend Health**: `GET http://127.0.0.1:8000/api/health` should return 200 OK.
 2.  **WebSocket Handshake**: Browser console should log "Handshake successful: WebSocket Link Active."

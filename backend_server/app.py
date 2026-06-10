@@ -1,15 +1,18 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
 import json
 import asyncio
 import os
 from contextlib import asynccontextmanager
+from .robot_controller import RobotController
 
-# --- Global State ---
+# --- Global State & Rule 1: Global Instance ---
 connected_clients = set()
+robot = RobotController(host="127.0.0.1", port=8000)
+
 global_robot_state = {
     "neck_roll": 0.0, "neck_pitch": 0.0, "neck_yaw": 0.0, "neck_height": 20.0,
     "l_antenna": 0.0, "r_antenna": 0.0,
@@ -57,10 +60,13 @@ async def telemetry_broadcast_loop():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Rule 1 Implementation: Startup connection and stiffening
     print("Initializing Robotics Communication Center...")
+    robot.connect() 
     telemetry_task = asyncio.create_task(telemetry_broadcast_loop())
     yield
     print("Shutting down Communication Center...")
+    robot.disconnect()
     telemetry_task.cancel()
     try:
         await telemetry_task
@@ -72,78 +78,69 @@ app = FastAPI(lifespan=lifespan)
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Standardizing for multi-device network access
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-FRONTEND_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend_app", "index.html")
-
 # --- REST Endpoints ---
 @app.get("/api/health")
 async def health_check():
-    return {"status": "online", "robot_state": "connected", "port": 8001}
+    return {"status": "online", "robot_state": "connected" if robot.is_connected else "disconnected", "port": 8001}
 
 @app.post("/api/internal/telemetry")
 async def receive_internal_telemetry(data: TelemetryData):
-    """
-    Bridge endpoint: Receives data from OpenCV loop and broadcasts to WebSockets.
-    """
-    # Package exactly as requested for the direct broadcast
     payload = data.model_dump()
-    
-    # Update global state for mirroring
     global_robot_state.update(payload)
-
-    # Broadcast raw payload to all connected clients
     for client in list(connected_clients):
         try:
             await client.send_json(payload)
         except Exception:
             connected_clients.remove(client)
-    
     return {"status": "broadcasted"}
 
 @app.post("/api/alerts")
 async def receive_alert(alert: AlertPayload):
-    """Receives alerts and broadcasts to all Dashboards."""
-    print(f"Alert Received: {alert.event_type} - {alert.severity}")
-    
     if alert.telemetry:
         global_robot_state.update(alert.telemetry)
-
-    payload = {
-        "type": "ALERT",
-        "data": alert.model_dump()
-    }
-    
+    payload = {"type": "ALERT", "data": alert.model_dump()}
     for client in list(connected_clients):
         try:
             await client.send_json(payload)
         except Exception:
             connected_clients.remove(client)
-            
     return {"status": "dispatched"}
 
+# --- Rule 3: Async Background Execution ---
 @app.post("/api/commands")
-async def receive_command(request: Request):
-    data = await request.json()
-    command = data.get("command")
-    print(f"REMOTE COMMAND RECEIVED: {command}")
-    
-    payload = {
-        "type": "CMD_TRIGGER",
-        "command": command
-    }
-    
-    for client in list(connected_clients):
-        try:
-            await client.send_json(payload)
-        except Exception:
-            connected_clients.remove(client)
+async def receive_command(request: Request, background_tasks: BackgroundTasks):
+    """
+    Main command bridge using BackgroundTasks for non-blocking hardware execution.
+    """
+    try:
+        data = await request.json()
+        command = data.get("command") or data.get("action")
+        
+        if not command:
+            return JSONResponse(content={"error": "No command specified"}, status_code=400)
             
-    return {"status": "command_received", "cmd": command}
+        print(f"REMOTE COMMAND RECEIVED: {command}")
+        
+        # Rule 3: Execute movement in background
+        background_tasks.add_task(robot.handle_macro, command)
+        
+        # WebSocket feedback
+        payload = {"type": "CMD_TRIGGER", "command": command}
+        for client in list(connected_clients):
+            try:
+                await client.send_json(payload)
+            except Exception:
+                connected_clients.remove(client)
+                
+        return {"status": "command_received", "cmd": command}
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 @app.post("/api/commands/joint")
 async def receive_joint_command(cmd: JointCommand):
@@ -160,9 +157,7 @@ async def websocket_endpoint(websocket: WebSocket):
     print(f"New Dashboard Connected. Total: {len(connected_clients)}")
     try:
         while True:
-            # Keep-alive and receive messages
-            data = await websocket.receive_text()
-            print(f"Received from dashboard: {data}")
+            await websocket.receive_text()
     except WebSocketDisconnect:
         connected_clients.remove(websocket)
         print("Dashboard gracefully disconnected.")
@@ -172,4 +167,4 @@ async def websocket_endpoint(websocket: WebSocket):
         print(f"WebSocket Error: {e}")
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="127.0.0.1", port=8001)
