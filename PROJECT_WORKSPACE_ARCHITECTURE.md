@@ -11,12 +11,13 @@ The following conceptual tree illustrates the high-level organization of the pro
 ├── interactive_reachy.py       # Main HCI / Voice AI Engine
 ├── test_reachy.py              # Orchestration, Patient Monitoring & Vision Loop
 ├── webcam_tracker.py           # Live OpenCV/MediaPipe Pose Estimation
+├── voice_monitor.py            # Continuous Voice Distress & NLP Monitor
 ├── network_alerts.py           # Non-blocking Alert Dispatcher (Local Target)
 ├── backend_server/
-│   └── app.py                  # FastAPI Edge Server (WS/REST: Port 8000)
+│   └── app.py                  # FastAPI Edge Server (WS/REST: Port 8001)
 ├── frontend_react/
 │   └── src/App.jsx             # Caregiver Dashboard (Vite Port: 5173)
-├── start_backend.py            # Port-Clearing Backend Launcher
+├── start_backend.py            # Unified Multi-Service System Launcher
 ├── map_workspace.py            # Architectural Verification Script
 ├── PROJECT_SUMMARY.md          # Technical Log & Milestones
 ├── start_sim.sh                # Simulation Bootstrapper
@@ -60,6 +61,7 @@ The project has evolved into a **Full-Stack Robotics** ecosystem. The Edge Serve
 - **Functional Role:** The high-level application layer that manages multimodal perception and robotic personality.
 - **Associated Sub-Categories & File Paths:**
     * *AI Logic Engine:* `interactive_reachy.py` (Voice assistant).
+    * *Audio Perception:* `voice_monitor.py` (Distress detection & TTS).
     * *Vision & Control:* `test_reachy.py` / `webcam_tracker.py` (Vision loop & P-Controller).
     * *Alert Dispatcher:* `network_alerts.py` (Communication bridge).
 
@@ -67,9 +69,9 @@ The project has evolved into a **Full-Stack Robotics** ecosystem. The Edge Serve
 
 ## 4. UTILITY SCRIPTS
 
-### Backend Launcher (`start_backend.py`)
-- **Purpose**: Solves `WinError 10048` (Address already in use) by auditing Port 8000 and force-terminating zombie processes before booting the FastAPI server.
-- **Dependencies**: Requires `psutil`.
+### Unified System Launcher (`start_backend.py`)
+- **Purpose**: A multi-process manager that boots the FastAPI backend, the OpenCV Vision Loop, and the Voice Monitor simultaneously in separate console windows.
+- **Features**: Automatic port auditing (8001) and service orchestration.
 
 ## 5. ARCHITECTURAL VERIFICATION
 

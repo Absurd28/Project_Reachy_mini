@@ -101,10 +101,22 @@ async def receive_internal_telemetry(data: TelemetryData):
     return {"status": "broadcasted"}
 
 @app.post("/api/alerts")
-async def receive_alert(alert: AlertPayload):
+async def receive_alert(alert: AlertPayload, background_tasks: BackgroundTasks):
+    """
+    Receives alerts and broadcasts to all Dashboards.
+    Rule 4: Automatically trigger hardware response for VOICE_DISTRESS.
+    """
     if alert.telemetry:
         global_robot_state.update(alert.telemetry)
+    
     payload = {"type": "ALERT", "data": alert.model_dump()}
+    print(f"Alert Received: {alert.event_type} - {alert.severity}")
+
+    # Rule 4: Handle Voice Distress with hardware reaction
+    if alert.event_type == "VOICE_DISTRESS":
+        print("[!] TRIGGERING EMERGENCY REACTION: Robot Looking Up...")
+        background_tasks.add_task(robot.handle_macro, "curious")
+
     for client in list(connected_clients):
         try:
             await client.send_json(payload)

@@ -79,6 +79,11 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Change**: Corrected the SDK API calls in 'backend_server/robot_controller.py' from 'turn_on/off' to 'enable_motors/disable_motors'.
   - **Reason**: Resolved 'AttributeError' that caused the hardware execution layer to fail silently, restoring physical movement in the simulation.
 
+- **2026-06-10**: 
+  - **Component**: Audio & Edge-AI (Phase 3)
+  - **Change**: Implemented 'voice_monitor.py' for continuous distress keyword detection, integrated TTS feedback, and updated 'backend_server/app.py' to trigger emergency robot reactions. Unified the startup sequence in 'start_backend.py'.
+  - **Reason**: To enable proactive patient safety monitoring via voice, allowing the robot to respond physically and alert caregivers when distress phrases are detected.
+
 ## Debugging & Verification Protocol
 1.  **Backend Health**: `GET http://127.0.0.1:8000/api/health` should return 200 OK.
 2.  **WebSocket Handshake**: Browser console should log "Handshake successful: WebSocket Link Active."
