@@ -23,9 +23,10 @@ class RobotController:
             # Initialize ReachyMini with the correct parameters
             self.reachy = ReachyMini(host=self.host, port=self.port, media_backend='no_media')
             
-            # Implementation of Rule 1: Startup stiffening
-            self.reachy.turn_on("head")
-            self.reachy.turn_on("antennas")
+            # Fixed: Use correct SDK methods 'enable_motors' instead of 'turn_on'
+            print("[*] Enabling motors (Stiffening)...")
+            self.reachy.enable_motors() 
+            
             self.is_connected = True
             print("[+] Robot Hardware Layer: ONLINE & STIFF")
         except Exception as e:
@@ -35,8 +36,8 @@ class RobotController:
     def disconnect(self):
         if self.reachy:
             try:
-                self.reachy.turn_off("head")
-                self.reachy.turn_off("antennas")
+                # Fixed: Use correct SDK methods 'disable_motors' instead of 'turn_off'
+                self.reachy.disable_motors()
                 print("[*] Robot Hardware Layer: RELEASED (COMPLIANT)")
             except:
                 pass
@@ -44,7 +45,7 @@ class RobotController:
     def _safe_goto(self, roll=0, pitch=0, yaw=0, z=None, antennas=[0, 0], duration=1.5):
         """Internal helper for safe, interpolated movement."""
         if not self.is_connected or not self.reachy:
-            print("[!] Command ignored: Robot not connected.")
+            print("[!] Command ignored: Robot not connected or connection failed.")
             return
 
         target_z = z if z is not None else self.neutral_z
@@ -55,7 +56,7 @@ class RobotController:
         except Exception as e:
             print(f"[!] Kinematic Error: {e}")
 
-    # --- Macro Sequences (Rule 2) ---
+    # --- Macro Sequences ---
 
     def cmd_wake_up(self):
         """Move head pitch/roll/yaw to 0, Z-translation to default height, antennas straight up."""
@@ -87,11 +88,11 @@ class RobotController:
         self._safe_goto(yaw=0, duration=1.5)
 
     def cmd_stiff(self):
-        if self.reachy: self.reachy.turn_on("head"); self.reachy.turn_on("antennas")
+        if self.reachy: self.reachy.enable_motors()
         print("[CONTROL] Motors: STIFF")
 
     def cmd_compliant(self):
-        if self.reachy: self.reachy.turn_off("head"); self.reachy.turn_off("antennas")
+        if self.reachy: self.reachy.disable_motors()
         print("[CONTROL] Motors: COMPLIANT")
 
     def handle_macro(self, action_key):

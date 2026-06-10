@@ -74,6 +74,11 @@ This file serves as a chronological log of all modifications, feature additions,
   - **Change**: Implemented a non-blocking Hardware Execution Layer in 'backend_server/robot_controller.py' and integrated it into 'backend_server/app.py' using FastAPI 'BackgroundTasks'.
   - **Reason**: To bridge the web API to the ReachyMini SDK, enabling the React dashboard to trigger smooth, asynchronous kinematic gestures (wake_up, hide, curious, scan) without blocking the HTTP response.
 
+- **2026-06-10**: 
+  - **Component**: Control & SDK Compatibility (Bug Fix)
+  - **Change**: Corrected the SDK API calls in 'backend_server/robot_controller.py' from 'turn_on/off' to 'enable_motors/disable_motors'.
+  - **Reason**: Resolved 'AttributeError' that caused the hardware execution layer to fail silently, restoring physical movement in the simulation.
+
 ## Debugging & Verification Protocol
 1.  **Backend Health**: `GET http://127.0.0.1:8000/api/health` should return 200 OK.
 2.  **WebSocket Handshake**: Browser console should log "Handshake successful: WebSocket Link Active."
