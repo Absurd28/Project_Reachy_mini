@@ -7,6 +7,7 @@ import LiveViewport from './components/LiveViewport';
 
 const ROBOT_HOST = window.location.hostname;
 const WS_URL = `ws://${ROBOT_HOST}:8001/ws/telemetry`;
+const API_BASE_URL = `http://${ROBOT_HOST}:8001/api`;
 
 function App() {
   const [isConnected, setIsConnected] = useState(false);
@@ -24,6 +25,25 @@ function App() {
       severity: severity
     }, ...prev].slice(0, 50));
   }, []);
+
+  const sendCommand = async (command) => {
+    console.log(`[NETWORK] Sending command: ${command} to ${API_BASE_URL}/commands`);
+    try {
+      const response = await fetch(`${API_BASE_URL}/commands`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: command })
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      console.log("[NETWORK] Command success:", result);
+    } catch (error) {
+      console.error("[NETWORK] Command Error:", error);
+      addAlert(`Command Failed: ${command}`, "CRITICAL");
+    }
+  };
 
   useEffect(() => {
     let reconnectTimeout;
@@ -124,11 +144,7 @@ function App() {
             )}
           </div>
           <button 
-            onClick={() => fetch(`http://${ROBOT_HOST}:8001/api/commands`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ command: 'E-STOP' })
-            })}
+            onClick={() => sendCommand('E-STOP')}
             className="bg-red-500 hover:bg-red-400 text-white font-bold py-3 px-6 rounded text-sm tracking-widest uppercase transition-colors flex items-center gap-2"
           >
             <AlertTriangle size={18} />
@@ -148,8 +164,8 @@ function App() {
                 System Modes <Activity size={14} />
              </h2>
              <div className="flex gap-2 mb-6">
-                <button onClick={() => fetch(`http://${ROBOT_HOST}:8001/api/commands`, { method: 'POST', body: JSON.stringify({command: 'STIFF'})})} className="flex-1 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm font-semibold transition-colors">STIFF</button>
-                <button onClick={() => fetch(`http://${ROBOT_HOST}:8001/api/commands`, { method: 'POST', body: JSON.stringify({command: 'COMPLIANT'})})} className="flex-1 py-2 bg-green-500 hover:bg-green-400 text-slate-900 rounded text-sm font-semibold transition-colors">COMPLIANT</button>
+                <button onClick={() => sendCommand('STIFF')} className="flex-1 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm font-semibold transition-colors">STIFF</button>
+                <button onClick={() => sendCommand('COMPLIANT')} className="flex-1 py-2 bg-green-500 hover:bg-green-400 text-slate-900 rounded text-sm font-semibold transition-colors">COMPLIANT</button>
              </div>
           </div>
         </div>
@@ -160,7 +176,7 @@ function App() {
         </div>
 
         {/* Right Column: Controls */}
-        <ControlPanel jointState={jointState} addAlert={addAlert} apiUrl={`http://${ROBOT_HOST}:8001/api`} />
+        <ControlPanel jointState={jointState} addAlert={addAlert} apiUrl={API_BASE_URL} />
         
       </main>
 

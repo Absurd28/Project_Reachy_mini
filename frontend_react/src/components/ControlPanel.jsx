@@ -17,10 +17,13 @@ const ControlPanel = ({ jointState, addAlert, apiUrl }) => {
   }, [jointState]);
 
   const sendMacro = async (cmd) => {
+    console.log(`[NETWORK] Sending macro: ${cmd} to ${apiUrl}/commands`);
     try {
       addAlert(`Sending command: ${cmd}`, "INFO");
-      await axios.post(`${apiUrl}/commands`, { command: cmd });
+      const response = await axios.post(`${apiUrl}/commands`, { command: cmd });
+      console.log("[NETWORK] Macro success:", response.data);
     } catch (e) {
+      console.error("[NETWORK] Macro Error:", e);
       addAlert(`Failed to send command: ${cmd}`, "CRITICAL");
     }
   };
@@ -43,7 +46,7 @@ const ControlPanel = ({ jointState, addAlert, apiUrl }) => {
           angle: numVal
         });
       } catch (e) {
-        console.error("Joint command failed", e);
+        console.error(`[NETWORK] Joint command failed for ${jointName}:`, e);
       }
     }, 50);
   }, [apiUrl]);

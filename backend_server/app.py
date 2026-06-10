@@ -75,7 +75,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# Enable CORS
+# --- Rule 2: Permissive CORS for local development ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -112,34 +112,39 @@ async def receive_alert(alert: AlertPayload):
             connected_clients.remove(client)
     return {"status": "dispatched"}
 
-# --- Rule 3: Async Background Execution ---
+# --- Rule 3: Async Background Execution & Verification Logging ---
 @app.post("/api/commands")
 async def receive_command(request: Request, background_tasks: BackgroundTasks):
     """
     Main command bridge using BackgroundTasks for non-blocking hardware execution.
     """
     try:
-        data = await request.json()
-        command = data.get("command") or data.get("action")
+        payload = await request.json()
+        command = payload.get("command") or payload.get("action")
+        
+        # Rule 3: High-visibility verification logging
+        print(f"🚥 COMMAND RECEIVED: {payload}")
         
         if not command:
+            print("⚠️ ERROR: No command specified in payload")
             return JSONResponse(content={"error": "No command specified"}, status_code=400)
             
-        print(f"REMOTE COMMAND RECEIVED: {command}")
+        print(f"[*] Dispatching to hardware: {command}")
         
         # Rule 3: Execute movement in background
         background_tasks.add_task(robot.handle_macro, command)
         
         # WebSocket feedback
-        payload = {"type": "CMD_TRIGGER", "command": command}
+        ws_payload = {"type": "CMD_TRIGGER", "command": command}
         for client in list(connected_clients):
             try:
-                await client.send_json(payload)
+                await client.send_json(ws_payload)
             except Exception:
                 connected_clients.remove(client)
                 
         return {"status": "command_received", "cmd": command}
     except Exception as e:
+        print(f"❌ COMMAND ENDPOINT ERROR: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 @app.post("/api/commands/joint")
