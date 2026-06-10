@@ -17,7 +17,8 @@ The following conceptual tree illustrates the high-level organization of the pro
 │   └── app.py                  # FastAPI Edge Server (WS/REST: Port 8001)
 ├── frontend_react/
 │   └── src/App.jsx             # Caregiver Dashboard (Vite Port: 5173)
-├── start_backend.py            # Unified Multi-Service System Launcher
+├── start_backend.py            # Dedicated Backend Launcher (Visible Logs)
+├── launch_ecosystem.py         # Multi-Service Orchestrator (Full Boot)
 ├── map_workspace.py            # Architectural Verification Script
 ├── PROJECT_SUMMARY.md          # Technical Log & Milestones
 ├── start_sim.sh                # Simulation Bootstrapper
@@ -69,9 +70,11 @@ The project has evolved into a **Full-Stack Robotics** ecosystem. The Edge Serve
 
 ## 4. UTILITY SCRIPTS
 
-### Unified System Launcher (`start_backend.py`)
-- **Purpose**: A multi-process manager that boots the FastAPI backend, the OpenCV Vision Loop, and the Voice Monitor simultaneously in separate console windows.
-- **Features**: Automatic port auditing (8001) and service orchestration.
+### Dedicated Backend Launcher (`start_backend.py`)
+- **Purpose**: Clears Port 8001 and launches the FastAPI server in the current console, allowing for direct visibility of telemetry transmission and REST/WS logs.
+
+### Ecosystem Orchestrator (`launch_ecosystem.py`)
+- **Purpose**: Automatically spawns the Backend, Vision Tracker, and Voice Monitor in three separate, persistent console windows for a "one-click" full system boot.
 
 ## 5. ARCHITECTURAL VERIFICATION
 

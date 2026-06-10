@@ -24,16 +24,25 @@ def kill_process_on_port(port):
     if not found:
         print(f"[+] Port {port} is clear.")
 
-def launch_service(name, cmd):
-    """Launches a service as a background process."""
-    print(f"[*] Launching {name}...")
+def launch_backend():
+    """Launches the FastAPI backend using uvicorn in the CURRENT console for log visibility."""
+    print("[*] Launching Reachy Mini Communication Center...")
+    print("[*] Telemetry logs will appear below:")
+    cmd = [
+        "uvicorn", 
+        "backend_server.app:app", 
+        "--host", "0.0.0.0", 
+        "--port", "8001", 
+        "--reload"
+    ]
+    
     try:
-        # Use subprocess.Popen for background execution
-        process = subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
-        return process
+        # Use subprocess.run to maintain console output and blocking behavior
+        subprocess.run(cmd, check=True)
+    except KeyboardInterrupt:
+        print("\n[!] Backend shutdown by user.")
     except Exception as e:
-        print(f"[ERROR] Failed to launch {name}: {e}")
-        return None
+        print(f"[ERROR] Failed to launch backend: {e}")
 
 if __name__ == "__main__":
     # Ensure we are in the project root
@@ -42,32 +51,9 @@ if __name__ == "__main__":
     
     # 1. Clear Port 8001
     kill_process_on_port(8001)
+    
+    # 2. Brief wait for OS to release socket
     time.sleep(1)
     
-    # 2. Unified Startup Sequence
-    services = []
-    
-    # A. FastAPI Backend
-    services.append(launch_service("FastAPI Backend", [
-        "uvicorn", "backend_server.app:app", "--host", "0.0.0.0", "--port", "8001"
-    ]))
-    
-    # B. OpenCV Vision Loop (Webcam Tracker)
-    services.append(launch_service("OpenCV Vision Loop", [
-        sys.executable, "webcam_tracker.py"
-    ]))
-    
-    # C. Voice Distress Monitor
-    services.append(launch_service("Voice Distress Monitor", [
-        sys.executable, "voice_monitor.py"
-    ]))
-    
-    print("\n[+] FULL SYSTEM BOOT COMPLETED.")
-    print("[*] All services are running in separate consoles.")
-    print("[*] Press Ctrl+C in this window to exit (Note: Child processes must be closed manually).")
-    
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print("\n[!] Manager shutdown by user.")
+    # 3. Launch Server
+    launch_backend()
